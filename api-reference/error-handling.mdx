@@ -1,0 +1,358 @@
+---
+title: "Error Handling"
+description: "Understanding and handling API errors properly"
+---
+
+## Overview
+
+The NiceAlts API uses standard HTTP status codes and returns detailed error messages to help you understand what went wrong and how to fix it. This guide covers all possible error responses and how to handle them in your applications.
+
+## HTTP status codes
+
+<AccordionGroup>
+<Accordion title="200 - Success">
+  Your request was successful. For order requests, account details will be returned as plain text.
+</Accordion>
+
+<Accordion title="400 - Bad Request">
+  The request was malformed or contained invalid parameters. Check your request body and parameters.
+</Accordion>
+
+<Accordion title="401 - Unauthorized">
+  Your API key is invalid or missing. Verify your API key is correct and properly formatted.
+</Accordion>
+
+<Accordion title="402 - Payment Required">
+  You don't have enough credits in your Discord account balance to complete the purchase.
+</Accordion>
+
+<Accordion title="404 - Not Found">
+  The requested product is not available or the endpoint doesn't exist.
+</Accordion>
+
+<Accordion title="429 - Too Many Requests">
+  You've exceeded the rate limit. Wait before making more requests.
+</Accordion>
+
+<Accordion title="500 - Internal Server Error">
+  Something went wrong on our end. Try again later or contact support.
+</Accordion>
+</AccordionGroup>
+
+## Error response format
+
+All error responses follow this JSON format:
+
+```json
+{
+  "detail": "Human-readable error description"
+}
+```
+
+## Common errors and solutions
+
+### Authentication errors
+
+#### Invalid API key
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Invalid API key"
+}
+```
+</ResponseExample>
+
+**What it means:** Your API key is incorrect or malformed.
+
+**How to fix:**
+- Verify you copied the API key correctly from Discord
+- Check that you're using the format: `Authorization: Bearer YOUR_API_KEY`
+- Generate a new API key using `/api-key` in Discord if needed
+
+#### Missing API key
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Authorization header required"
+}
+```
+</ResponseExample>
+
+**What it means:** You didn't include the Authorization header in your request.
+
+**How to fix:**
+- Add the Authorization header: `Authorization: Bearer YOUR_API_KEY`
+
+### Payment errors
+
+#### Insufficient balance
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Insufficient balance. Required: 50 credits, Available: 25 credits"
+}
+```
+</ResponseExample>
+
+**What it means:** You don't have enough credits in your Discord account to complete the purchase.
+
+**How to fix:**
+- Check your balance using the Discord bot
+- Purchase more credits if needed
+- Retry your request
+
+### Product errors
+
+#### Product not available
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Product 'Unban (AccessToken)' not available"
+}
+```
+</ResponseExample>
+
+**What it means:** The product you're trying to purchase doesn't exist or isn't currently available.
+
+**How to fix:**
+- Check the [stock endpoint](/api-reference/endpoints/stock) to see available products
+- Use the exact product name from the stock response
+- Available products: `"Unban (AccessToken)"`, `"Ban (AccessToken)"`, `"Unban HQ (Cookie)"`
+
+#### Out of stock
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Insufficient stock. Requested: 5, Available: 2"
+}
+```
+</ResponseExample>
+
+**What it means:** There aren't enough accounts in stock to fulfill your order.
+
+**How to fix:**
+- Check current stock levels using the stock endpoint
+- Reduce your quantity to match available stock
+- Try again later when more stock is available
+
+### Request validation errors
+
+#### Invalid quantity
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Invalid quantity. Must be between 1 and 10"
+}
+```
+</ResponseExample>
+
+**What it means:** You're trying to purchase too many or too few accounts.
+
+**How to fix:**
+- Ensure quantity is between 1 and 10
+- Check that quantity is a valid integer
+
+#### Invalid precheck option
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Invalid precheck option. Must be 'none' or 'full'"
+}
+```
+</ResponseExample>
+
+**What it means:** You used an invalid precheck value.
+
+**How to fix:**
+- Use either `"none"` or `"full"` for the precheck parameter
+- Check spelling and case sensitivity
+
+### Rate limiting
+
+#### Too many requests
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Rate limit exceeded. Try again later."
+}
+```
+</ResponseExample>
+
+**What it means:** You've exceeded the rate limit for your API key.
+
+**How to fix:**
+- Wait before making more requests
+- Check rate limit headers in the response:
+  - `X-RateLimit-Limit` - Your rate limit
+  - `X-RateLimit-Remaining` - Requests remaining
+  - `X-RateLimit-Reset` - When the limit resets
+
+## Error handling examples
+
+### Python with requests
+
+```python
+import requests
+import time
+
+def make_api_request(url, headers, data=None):
+    try:
+        if data:
+            response = requests.post(url, headers=headers, json=data)
+        else:
+            response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            return {"success": True, "data": response.text}
+        elif response.status_code == 429:
+            # Rate limited - wait and retry
+            retry_after = int(response.headers.get("Retry-After", 60))
+            print(f"Rate limited. Waiting {retry_after} seconds...")
+            time.sleep(retry_after)
+            return make_api_request(url, headers, data)  # Retry
+        else:
+            error_detail = response.json().get("detail", "Unknown error")
+            return {"success": False, "error": error_detail}
+    
+    except requests.exceptions.RequestException as e:
+        return {"success": False, "error": f"Network error: {str(e)}"}
+
+# Usage
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
+result = make_api_request("https://api.nicealts.com/v1/stock", headers)
+
+if result["success"]:
+    print("Success:", result["data"])
+else:
+    print("Error:", result["error"])
+```
+
+### JavaScript with fetch
+
+```javascript
+async function makeApiRequest(url, options = {}) {
+    try {
+        const response = await fetch(url, {
+            headers: {
+                "Authorization": "Bearer YOUR_API_KEY",
+                "Content-Type": "application/json",
+                ...options.headers
+            },
+            ...options
+        });
+        
+        if (response.ok) {
+            const data = await response.text();
+            return { success: true, data };
+        } else if (response.status === 429) {
+            // Rate limited - wait and retry
+            const retryAfter = response.headers.get("Retry-After") || 60;
+            console.log(`Rate limited. Waiting ${retryAfter} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+            return makeApiRequest(url, options); // Retry
+        } else {
+            const error = await response.json();
+            return { success: false, error: error.detail };
+        }
+    } catch (error) {
+        return { success: false, error: `Network error: ${error.message}` };
+    }
+}
+
+// Usage
+const result = await makeApiRequest("https://api.nicealts.com/v1/stock");
+
+if (result.success) {
+    console.log("Success:", result.data);
+} else {
+    console.log("Error:", result.error);
+}
+```
+
+### PHP with cURL
+
+```php
+<?php
+function makeApiRequest($url, $data = null) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer YOUR_API_KEY",
+        "Content-Type: application/json"
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+    if ($data) {
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    }
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200) {
+        return ["success" => true, "data" => $response];
+    } elseif ($httpCode === 429) {
+        // Rate limited
+        echo "Rate limited. Waiting 60 seconds...\n";
+        sleep(60);
+        return makeApiRequest($url, $data); // Retry
+    } else {
+        $error = json_decode($response, true);
+        return ["success" => false, "error" => $error["detail"] ?? "Unknown error"];
+    }
+}
+
+// Usage
+$result = makeApiRequest("https://api.nicealts.com/v1/stock");
+
+if ($result["success"]) {
+    echo "Success: " . $result["data"];
+} else {
+    echo "Error: " . $result["error"];
+}
+?>
+```
+
+## Best practices
+
+### Always check response status
+
+Don't assume requests will always succeed. Always check the HTTP status code and handle errors appropriately.
+
+### Implement retry logic
+
+For rate limiting and temporary server errors, implement exponential backoff retry logic.
+
+### Log errors appropriately
+
+Log errors for debugging but never log sensitive information like API keys or account details.
+
+### Validate input
+
+Validate your request parameters before sending them to avoid unnecessary API calls.
+
+<Warning>
+**Important:** Never expose API keys or account details in error logs or user-facing error messages.
+</Warning>
+
+## Getting help
+
+If you're still having issues after checking this guide:
+
+<Card
+  title="Join our Discord"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Get help from our community and support team
+</Card>

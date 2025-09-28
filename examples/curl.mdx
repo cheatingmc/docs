@@ -1,0 +1,361 @@
+---
+title: "cURL Examples"
+description: "Command-line examples for testing the NiceAlts API"
+---
+
+## Overview
+
+cURL is perfect for testing the API, quick scripts, and understanding how the API works. These examples show you how to interact with the NiceAlts API using command-line tools.
+
+<Info>
+Replace `YOUR_API_KEY_HERE` with your actual API key from Discord in all examples below.
+</Info>
+
+## Basic setup
+
+Set your API key as an environment variable for easier use:
+
+```bash
+export API_KEY="YOUR_API_KEY_HERE"
+```
+
+Now you can use `$API_KEY` in your commands instead of typing the full key each time.
+
+## Check stock
+
+See what accounts are currently available:
+
+```bash
+curl -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock
+```
+
+### Pretty-printed output
+
+For better readability, pipe the output through `jq`:
+
+```bash
+curl -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock | jq
+```
+
+### Save stock to file
+
+```bash
+curl -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock \
+     -o stock.json
+```
+
+## Purchase accounts
+
+### Single account with prechecking
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer $API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "product": "Unban (AccessToken)",
+       "quantity": 1,
+       "precheck": "full"
+     }' \
+     https://api.nicealts.com/v1/order
+```
+
+### Multiple accounts without prechecking
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer $API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "product": "Ban (AccessToken)",
+       "quantity": 3,
+       "precheck": "none"
+     }' \
+     https://api.nicealts.com/v1/order
+```
+
+### Premium Cookie accounts
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer $API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "product": "Unban HQ (Cookie)",
+       "quantity": 2,
+       "precheck": "full"
+     }' \
+     https://api.nicealts.com/v1/order
+```
+
+## Advanced examples
+
+### Check rate limits
+
+Monitor your rate limit usage:
+
+```bash
+curl -I -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock
+```
+
+Look for these headers in the response:
+- `X-RateLimit-Limit`
+- `X-RateLimit-Remaining`
+- `X-RateLimit-Reset`
+
+### Verbose output for debugging
+
+See detailed request/response information:
+
+```bash
+curl -v -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock
+```
+
+### Save accounts to file
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer $API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "product": "Unban (AccessToken)",
+       "quantity": 1,
+       "precheck": "full"
+     }' \
+     https://api.nicealts.com/v1/order \
+     -o accounts.txt
+```
+
+## Shell scripts
+
+### Stock monitoring script
+
+Create a script to monitor stock levels:
+
+```bash
+#!/bin/bash
+# monitor_stock.sh
+
+API_KEY="YOUR_API_KEY_HERE"
+ALERT_THRESHOLD=10
+
+while true; do
+    echo "Checking stock at $(date)..."
+    
+    # Get stock data
+    STOCK_DATA=$(curl -s -H "Authorization: Bearer $API_KEY" \
+                     https://api.nicealts.com/v1/stock)
+    
+    # Check each product
+    echo "$STOCK_DATA" | jq -r 'to_entries[] | "\(.key): \(.value.stock) available"'
+    
+    # Alert if stock is low
+    echo "$STOCK_DATA" | jq -r --arg threshold "$ALERT_THRESHOLD" \
+        'to_entries[] | select(.value.stock < ($threshold | tonumber)) | 
+         "ALERT: \(.key) has only \(.value.stock) accounts left!"'
+    
+    echo "---"
+    sleep 60  # Check every minute
+done
+```
+
+### Bulk purchase script
+
+```bash
+#!/bin/bash
+# bulk_purchase.sh
+
+API_KEY="YOUR_API_KEY_HERE"
+PRODUCT="Unban (AccessToken)"
+QUANTITY=5
+PRECHECK="full"
+
+echo "Purchasing $QUANTITY $PRODUCT accounts..."
+
+RESPONSE=$(curl -s -X POST \
+     -H "Authorization: Bearer $API_KEY" \
+     -H "Content-Type: application/json" \
+     -d "{
+       \"product\": \"$PRODUCT\",
+       \"quantity\": $QUANTITY,
+       \"precheck\": \"$PRECHECK\"
+     }" \
+     https://api.nicealts.com/v1/order)
+
+# Check if request was successful
+if [[ $RESPONSE == *"email:"* ]]; then
+    echo "Purchase successful!"
+    echo "Accounts received:"
+    echo "$RESPONSE"
+    
+    # Save to file with timestamp
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    echo "$RESPONSE" > "accounts_${TIMESTAMP}.txt"
+    echo "Accounts saved to accounts_${TIMESTAMP}.txt"
+else
+    echo "Purchase failed:"
+    echo "$RESPONSE"
+fi
+```
+
+### Price comparison script
+
+```bash
+#!/bin/bash
+# compare_prices.sh
+
+API_KEY="YOUR_API_KEY_HERE"
+
+echo "Current NiceAlts prices:"
+echo "========================"
+
+curl -s -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock | \
+jq -r 'to_entries[] | "\(.key): \(.value.price) credits (\(.value.stock) in stock)"'
+
+echo ""
+echo "Price per account:"
+curl -s -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock | \
+jq -r 'to_entries[] | "\(.key): \(.value.price) credits each"'
+```
+
+## Error handling
+
+### Check response status
+
+```bash
+#!/bin/bash
+# safe_request.sh
+
+API_KEY="YOUR_API_KEY_HERE"
+
+# Make request and capture both response and status code
+RESPONSE=$(curl -s -w "%{http_code}" \
+     -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock)
+
+# Extract status code (last 3 characters)
+STATUS_CODE="${RESPONSE: -3}"
+RESPONSE_BODY="${RESPONSE%???}"
+
+case $STATUS_CODE in
+    200)
+        echo "Success:"
+        echo "$RESPONSE_BODY" | jq
+        ;;
+    401)
+        echo "Error: Invalid API key"
+        ;;
+    429)
+        echo "Error: Rate limit exceeded"
+        ;;
+    500)
+        echo "Error: Server error"
+        ;;
+    *)
+        echo "Error: HTTP $STATUS_CODE"
+        echo "$RESPONSE_BODY"
+        ;;
+esac
+```
+
+### Retry logic
+
+```bash
+#!/bin/bash
+# retry_request.sh
+
+API_KEY="YOUR_API_KEY_HERE"
+MAX_RETRIES=3
+RETRY_DELAY=5
+
+make_request() {
+    local attempt=1
+    
+    while [ $attempt -le $MAX_RETRIES ]; do
+        echo "Attempt $attempt of $MAX_RETRIES..."
+        
+        RESPONSE=$(curl -s -w "%{http_code}" \
+             -H "Authorization: Bearer $API_KEY" \
+             https://api.nicealts.com/v1/stock)
+        
+        STATUS_CODE="${RESPONSE: -3}"
+        RESPONSE_BODY="${RESPONSE%???}"
+        
+        if [ "$STATUS_CODE" = "200" ]; then
+            echo "Success!"
+            echo "$RESPONSE_BODY" | jq
+            return 0
+        elif [ "$STATUS_CODE" = "429" ]; then
+            echo "Rate limited. Waiting $RETRY_DELAY seconds..."
+            sleep $RETRY_DELAY
+            RETRY_DELAY=$((RETRY_DELAY * 2))  # Exponential backoff
+        else
+            echo "Error: HTTP $STATUS_CODE"
+            echo "$RESPONSE_BODY"
+            return 1
+        fi
+        
+        attempt=$((attempt + 1))
+    done
+    
+    echo "Max retries exceeded"
+    return 1
+}
+
+make_request
+```
+
+## Tips and tricks
+
+### Use aliases for common commands
+
+Add these to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+# NiceAlts API aliases
+alias nicealts-stock='curl -H "Authorization: Bearer $API_KEY" https://api.nicealts.com/v1/stock | jq'
+alias nicealts-buy='curl -X POST -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" -d'
+```
+
+### Use curl with configuration files
+
+Create a `.curlrc` file in your home directory:
+
+```
+header = "Authorization: Bearer YOUR_API_KEY_HERE"
+header = "Content-Type: application/json"
+```
+
+Now you can make requests without specifying headers:
+
+```bash
+curl https://api.nicealts.com/v1/stock
+```
+
+### Combine with other tools
+
+Use curl with other command-line tools for powerful workflows:
+
+```bash
+# Get stock and filter for low inventory
+curl -s -H "Authorization: Bearer $API_KEY" \
+     https://api.nicealts.com/v1/stock | \
+jq 'to_entries[] | select(.value.stock < 20) | "\(.key): \(.value.stock) left"'
+
+# Monitor stock changes over time
+while true; do
+    echo "$(date): $(curl -s -H "Authorization: Bearer $API_KEY" https://api.nicealts.com/v1/stock | jq '."Unban (AccessToken)".stock')"
+    sleep 30
+done
+```
+
+<Tip>
+**Pro tip:** Use `jq` for JSON processing, `grep` for filtering, and `awk` for text processing to create powerful command-line workflows with the NiceAlts API.
+</Tip>

@@ -1,80 +1,160 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quickstart Guide"
+description: "Get your API key and make your first purchase in under 5 minutes"
 ---
 
-## Get started in three steps
+## Welcome! Let's get you set up 🚀
 
-Get your documentation site running locally and make your first customization.
+This quick guide will have you making API calls in no time. We'll walk through getting your API key and making your first purchase.
 
-### Step 1: Set up your local environment
+## What you'll need
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+Before we start, make sure you have:
 
-### Step 2: Deploy your changes
+- A Discord account
+- Some credits in your NiceAlts Discord balance
+- Your favorite code editor or terminal ready
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<Info>
+Don't have credits yet? Join our Discord server and use the bot to purchase some credits first!
+</Info>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Step 1: Get your API key
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+<Step title="Join our Discord server">
+  Head over to our Discord server and join the community.
+  
+  <Card
+    title="Join Discord"
+    icon="discord"
+    href="https://discord.gg/nicealts"
+  >
+    Click here to join our Discord server
+  </Card>
+</Step>
 
-### Step 3: Go live
+<Step title="Generate your API key">
+  Once you're in the server, use the slash command to get your API key:
+  
+  ```
+  /api-key
+  ```
+  
+  The bot will generate a unique API key tied to your Discord account balance.
+</Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+<Step title="Save your API key">
+  Copy the generated API key and keep it safe! You'll need it for all API requests.
+  
+  <Warning>
+  Keep your API key secure! Anyone with access to it can make purchases using your Discord balance.
+  </Warning>
+</Step>
+</Steps>
 
-## Next steps
+## Step 2: Check what's available
 
-Now that you have your docs running, explore these key features:
+<Steps>
+<Step title="Check stock">
+  Let's see what accounts are available right now:
+  
+  ```bash
+  curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+       https://api.nicealts.com/v1/stock
+  ```
+  
+  You should see something like:
+  
+  ```json
+  {
+    "Unban (AccessToken)": {
+      "price": 50,
+      "stock": 150
+    },
+    "Ban (AccessToken)": {
+      "price": 30,
+      "stock": 75
+    },
+    "Unban HQ (Cookie)": {
+      "price": 100,
+      "stock": 25
+    }
+  }
+  ```
+</Step>
+</Steps>
 
-<CardGroup cols={2}>
+## Step 3: Make your first purchase
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+<Steps>
+<Step title="Choose your account type">
+  Pick what you want to buy:
+  - **Unban (AccessToken)** - Unbanned accounts, great for most uses
+  - **Ban (AccessToken)** - Banned accounts, cheaper option
+  - **Unban HQ (Cookie)** - High-quality cookie accounts, premium option
+</Step>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+<Step title="Place your order">
+  Let's buy 1 Unban AccessToken account with full prechecking:
+  
+  ```bash
+  curl -X POST \
+       -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+       -H "Content-Type: application/json" \
+       -d '{
+         "product": "Unban (AccessToken)",
+         "quantity": 1,
+         "precheck": "full"
+       }' \
+       https://api.nicealts.com/v1/order
+  ```
+</Step>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+<Step title="Get your accounts">
+  If everything went well, you'll receive your account details as plain text. The accounts will be delivered immediately!
+  
+  <Check>
+  Success! You've just made your first API purchase. The account details should be in the response.
+  </Check>
+</Step>
+</Steps>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+## What's next?
 
-</CardGroup>
+Now that you've got the basics down, here are some next steps:
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+<Columns cols={2}>
+  <Card
+    title="Explore the API"
+    icon="code"
+    href="/api-reference/overview"
+  >
+    Learn about all available endpoints and parameters.
+  </Card>
+  <Card
+    title="See more examples"
+    icon="terminal"
+    href="/examples/curl"
+  >
+    Check out examples in your favorite programming language.
+  </Card>
+  <Card
+    title="Handle errors"
+    icon="exclamation-triangle"
+    href="/api-reference/error-handling"
+  >
+    Learn how to handle errors and edge cases properly.
+  </Card>
+  <Card
+    title="Join the community"
+    icon="discord"
+    href="https://discord.gg/nicealts"
+  >
+    Get help and share your projects with other developers.
+  </Card>
+</Columns>
+
+<Tip>
+**Pro tip:** Start with small quantities and test your integration before scaling up. The API is fast, but it's always good to test first!
+</Tip>

@@ -1,0 +1,269 @@
+---
+title: "Purchase Accounts"
+description: "Buy Minecraft accounts with optional prechecking"
+---
+
+## Overview
+
+The order endpoint allows you to purchase Minecraft accounts programmatically. You can specify the product type, quantity, and whether you want prechecking enabled. Accounts are delivered immediately upon successful purchase.
+
+## Endpoint
+
+```
+POST /v1/order
+```
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Your API key in Bearer format: `Bearer YOUR_API_KEY_HERE`
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be set to `application/json`
+</ParamField>
+
+## Request body
+
+<ParamField body="product" type="string" required>
+  The product type to purchase. Available options:
+  - `"Unban (AccessToken)"` - High-quality unbanned AccessToken accounts
+  - `"Ban (AccessToken)"` - Standard banned AccessToken accounts  
+  - `"Unban HQ (Cookie)"` - Premium unbanned Cookie accounts
+</ParamField>
+
+<ParamField body="quantity" type="integer" required>
+  Number of accounts to purchase. Range: 1-10
+</ParamField>
+
+<ParamField body="precheck" type="string" default="none">
+  Prechecking option for account validation:
+  - `"none"` - No prechecking (faster delivery, lower cost)
+  - `"full"` - Full prechecking (validates account + ban status)
+</ParamField>
+
+## Response
+
+<ResponseField name="accounts" type="string">
+  Plain text response containing the purchased account details. Each account is separated by a newline.
+</ResponseField>
+
+## Example requests
+
+### Purchase 1 Unban AccessToken with prechecking
+
+<RequestExample>
+```bash cURL
+curl -X POST \
+     -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "product": "Unban (AccessToken)",
+       "quantity": 1,
+       "precheck": "full"
+     }' \
+     https://api.nicealts.com/v1/order
+```
+</RequestExample>
+
+### Purchase 3 Cookie accounts without prechecking
+
+<RequestExample>
+```bash cURL
+curl -X POST \
+     -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "product": "Unban HQ (Cookie)",
+       "quantity": 3,
+       "precheck": "none"
+     }' \
+     https://api.nicealts.com/v1/order
+```
+</RequestExample>
+
+## Example responses
+
+### Success response
+
+<ResponseExample>
+```text Success
+email:password:access_token
+user@example.com:password123:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+another@example.com:password456:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+</ResponseExample>
+
+### Error responses
+
+#### Insufficient balance
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Insufficient balance. Required: 50 credits, Available: 25 credits"
+}
+```
+</ResponseExample>
+
+#### Product not available
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Product 'Unban (AccessToken)' not available"
+}
+```
+</ResponseExample>
+
+#### Out of stock
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Insufficient stock. Requested: 5, Available: 2"
+}
+```
+</ResponseExample>
+
+#### Invalid quantity
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Invalid quantity. Must be between 1 and 10"
+}
+```
+</ResponseExample>
+
+## Product types explained
+
+### Unban (AccessToken)
+- **Price:** 50 credits each
+- **Quality:** High
+- **Delivery:** Fast
+- **Best for:** Most applications, reliable performance
+- **Format:** `email:password:access_token`
+
+### Ban (AccessToken)
+- **Price:** 30 credits each
+- **Quality:** Standard
+- **Delivery:** Fast
+- **Best for:** Budget-conscious users
+- **Format:** `email:password:access_token`
+
+### Unban HQ (Cookie)
+- **Price:** 100 credits each
+- **Quality:** Premium
+- **Delivery:** Fast
+- **Best for:** High-value applications
+- **Format:** `email:password:cookie_data`
+
+## Prechecking options
+
+### None (`"none"`)
+- **Speed:** Fastest delivery
+- **Cost:** Standard price
+- **Validation:** No pre-purchase validation
+- **Use when:** Speed is more important than validation
+
+### Full (`"full"`)
+- **Speed:** Slightly slower delivery
+- **Cost:** Standard price
+- **Validation:** Full account and ban status validation
+- **Use when:** Account quality is critical
+
+<Tip>
+**Pro tip:** Use full prechecking for important applications where account quality matters. Use none for bulk purchases where speed is more important.
+</Tip>
+
+## Rate limits
+
+- **10 orders per minute** per API key
+- **100 total requests per minute** per API key
+- Rate limit headers included in response:
+  - `X-RateLimit-Limit`
+  - `X-RateLimit-Remaining`
+  - `X-RateLimit-Reset`
+
+## Best practices
+
+### Check stock first
+
+Always check stock availability before placing large orders:
+
+```python
+import requests
+
+def purchase_with_stock_check(product, quantity):
+    # Check stock first
+    stock_response = requests.get(
+        "https://api.nicealts.com/v1/stock",
+        headers={"Authorization": "Bearer YOUR_API_KEY"}
+    )
+    stock = stock_response.json()
+    
+    if stock[product]["stock"] < quantity:
+        print(f"Not enough stock. Available: {stock[product]['stock']}")
+        return None
+    
+    # Place order
+    order_data = {
+        "product": product,
+        "quantity": quantity,
+        "precheck": "full"
+    }
+    
+    response = requests.post(
+        "https://api.nicealts.com/v1/order",
+        headers={
+            "Authorization": "Bearer YOUR_API_KEY",
+            "Content-Type": "application/json"
+        },
+        json=order_data
+    )
+    
+    if response.status_code == 200:
+        return response.text
+    else:
+        print(f"Order failed: {response.json()}")
+        return None
+```
+
+### Handle errors gracefully
+
+```javascript
+async function purchaseAccounts(product, quantity) {
+    try {
+        const response = await fetch("https://api.nicealts.com/v1/order", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer YOUR_API_KEY",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                product,
+                quantity,
+                precheck: "full"
+            })
+        });
+        
+        if (response.ok) {
+            const accounts = await response.text();
+            console.log("Accounts received:", accounts);
+            return accounts;
+        } else {
+            const error = await response.json();
+            console.error("Purchase failed:", error.detail);
+            return null;
+        }
+    } catch (error) {
+        console.error("Network error:", error);
+        return null;
+    }
+}
+```
+
+<Warning>
+**Important:** Account details are delivered as plain text. Make sure to handle them securely and never log them in plain text in production environments.
+</Warning>

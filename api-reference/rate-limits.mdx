@@ -1,0 +1,351 @@
+---
+title: "Rate Limits"
+description: "Understanding API rate limits and how to stay within them"
+---
+
+## Overview
+
+To ensure fair usage and maintain service quality, the NiceAlts API implements rate limiting. This guide explains the limits, how they work, and how to handle them in your applications.
+
+## Rate limit details
+
+### General API limits
+- **100 requests per minute** per API key
+- Applies to all endpoints (stock, order, etc.)
+
+### Order-specific limits
+- **10 orders per minute** per API key
+- Additional restriction on the `/v1/order` endpoint
+
+<Info>
+Rate limits are applied per API key, so each user has their own independent limits.
+</Info>
+
+## Rate limit headers
+
+Every API response includes rate limit information in the headers:
+
+<ResponseField name="X-RateLimit-Limit" type="string">
+  Your total rate limit for the current time window
+</ResponseField>
+
+<ResponseField name="X-RateLimit-Remaining" type="string">
+  Number of requests remaining in the current time window
+</ResponseField>
+
+<ResponseField name="X-RateLimit-Reset" type="string">
+  Unix timestamp when the rate limit resets
+</ResponseField>
+
+### Example headers
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+```
+
+## Rate limit exceeded response
+
+When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Rate limit exceeded. Try again later."
+}
+```
+</ResponseExample>
+
+## Handling rate limits
+
+### Check rate limit headers
+
+Always check the rate limit headers to monitor your usage:
+
+<CodeGroup>
+```python Python
+import requests
+import time
+
+def check_rate_limits(response):
+    limit = response.headers.get('X-RateLimit-Limit')
+    remaining = response.headers.get('X-RateLimit-Remaining')
+    reset = response.headers.get('X-RateLimit-Reset')
+    
+    print(f"Rate limit: {limit}")
+    print(f"Remaining: {remaining}")
+    print(f"Resets at: {reset}")
+    
+    # If we're close to the limit, slow down
+    if int(remaining) < 10:
+        print("Approaching rate limit, slowing down...")
+        time.sleep(1)
+
+# Usage
+response = requests.get(
+    "https://api.nicealts.com/v1/stock",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+check_rate_limits(response)
+```
+
+```javascript JavaScript
+function checkRateLimits(response) {
+    const limit = response.headers.get('X-RateLimit-Limit');
+    const remaining = response.headers.get('X-RateLimit-Remaining');
+    const reset = response.headers.get('X-RateLimit-Reset');
+    
+    console.log(`Rate limit: ${limit}`);
+    console.log(`Remaining: ${remaining}`);
+    console.log(`Resets at: ${reset}`);
+    
+    // If we're close to the limit, slow down
+    if (parseInt(remaining) < 10) {
+        console.log("Approaching rate limit, slowing down...");
+        return true; // Indicate we should slow down
+    }
+    return false;
+}
+
+// Usage
+fetch("https://api.nicealts.com/v1/stock", {
+    headers: { "Authorization": "Bearer YOUR_API_KEY" }
+})
+.then(response => {
+    const shouldSlowDown = checkRateLimits(response);
+    if (shouldSlowDown) {
+        // Implement backoff logic
+    }
+});
+```
+</CodeGroup>
+
+### Implement exponential backoff
+
+When you hit rate limits, implement exponential backoff to retry requests:
+
+```python
+import requests
+import time
+import random
+
+def make_request_with_backoff(url, headers, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                return response
+            elif response.status_code == 429:
+                # Rate limited - implement backoff
+                if attempt < max_retries - 1:
+                    # Exponential backoff with jitter
+                    delay = (2 ** attempt) + random.uniform(0, 1)
+                    print(f"Rate limited. Waiting {delay:.2f} seconds...")
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise Exception("Max retries exceeded")
+            else:
+                response.raise_for_status()
+                
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                delay = (2 ** attempt) + random.uniform(0, 1)
+                print(f"Request failed: {e}. Retrying in {delay:.2f} seconds...")
+                time.sleep(delay)
+            else:
+                raise e
+    
+    return None
+```
+
+### Batch requests efficiently
+
+Instead of making many individual requests, batch them when possible:
+
+```javascript
+class NiceAltsAPI {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.requestQueue = [];
+        this.isProcessing = false;
+    }
+    
+    async makeRequest(url, options = {}) {
+        return new Promise((resolve, reject) => {
+            this.requestQueue.push({ url, options, resolve, reject });
+            this.processQueue();
+        });
+    }
+    
+    async processQueue() {
+        if (this.isProcessing || this.requestQueue.length === 0) {
+            return;
+        }
+        
+        this.isProcessing = true;
+        
+        while (this.requestQueue.length > 0) {
+            const { url, options, resolve, reject } = this.requestQueue.shift();
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        "Authorization": `Bearer ${this.apiKey}`,
+                        "Content-Type": "application/json",
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    resolve(data);
+                } else if (response.status === 429) {
+                    // Rate limited - put request back in queue
+                    this.requestQueue.unshift({ url, options, resolve, reject });
+                    const retryAfter = response.headers.get("Retry-After") || 60;
+                    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                } else {
+                    const error = await response.json();
+                    reject(new Error(error.detail));
+                }
+            } catch (error) {
+                reject(error);
+            }
+            
+            // Small delay between requests to avoid hitting limits
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        this.isProcessing = false;
+    }
+}
+```
+
+## Best practices
+
+### Monitor your usage
+
+Keep track of your rate limit usage to avoid hitting limits:
+
+```python
+class RateLimitMonitor:
+    def __init__(self):
+        self.requests_made = 0
+        self.orders_made = 0
+        self.window_start = time.time()
+    
+    def can_make_request(self):
+        # Reset counters every minute
+        if time.time() - self.window_start >= 60:
+            self.requests_made = 0
+            self.orders_made = 0
+            self.window_start = time.time()
+        
+        return self.requests_made < 100
+    
+    def can_make_order(self):
+        return self.can_make_request() and self.orders_made < 10
+    
+    def record_request(self, is_order=False):
+        self.requests_made += 1
+        if is_order:
+            self.orders_made += 1
+```
+
+### Use appropriate delays
+
+Add small delays between requests to stay well under the rate limit:
+
+```python
+import time
+
+def make_requests_with_delay(requests, delay=0.1):
+    for request in requests:
+        # Make the request
+        response = make_request(request)
+        
+        # Small delay to stay under rate limit
+        time.sleep(delay)
+        
+        yield response
+```
+
+### Handle burst traffic
+
+If you need to make many requests quickly, consider implementing a queue system:
+
+```python
+import asyncio
+import aiohttp
+
+class AsyncNiceAltsAPI:
+    def __init__(self, api_key, max_concurrent=5):
+        self.api_key = api_key
+        self.semaphore = asyncio.Semaphore(max_concurrent)
+        self.session = None
+    
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+    
+    async def make_request(self, url, options=None):
+        async with self.semaphore:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            async with self.session.get(url, headers=headers) as response:
+                if response.status == 200:
+                    return await response.text()
+                elif response.status == 429:
+                    # Rate limited - wait and retry
+                    retry_after = int(response.headers.get("Retry-After", 60))
+                    await asyncio.sleep(retry_after)
+                    return await self.make_request(url, options)
+                else:
+                    error = await response.json()
+                    raise Exception(error["detail"])
+```
+
+## Rate limit strategies by use case
+
+### Stock monitoring
+
+For applications that need to check stock frequently:
+
+- Check stock every 30-60 seconds instead of continuously
+- Use the rate limit headers to optimize timing
+- Consider caching stock data locally
+
+### Bulk purchasing
+
+For applications that need to make many orders:
+
+- Spread orders over time (max 10 per minute)
+- Use the order endpoint efficiently
+- Implement proper error handling and retries
+
+### Development and testing
+
+For development and testing:
+
+- Use smaller quantities for testing
+- Implement proper delays between requests
+- Monitor rate limit headers during development
+
+<Tip>
+**Pro tip:** Always implement proper error handling for rate limits. It's better to handle them gracefully than to have your application crash when limits are exceeded.
+</Tip>
+
+<Warning>
+**Important:** Rate limits are enforced per API key. If you're sharing an API key across multiple applications, they'll share the same rate limit pool.
+</Warning>

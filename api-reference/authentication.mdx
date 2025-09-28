@@ -1,0 +1,172 @@
+---
+title: "Authentication"
+description: "How to authenticate with the NiceAlts API"
+---
+
+## Getting your API key
+
+Your API key is your gateway to the NiceAlts API. It's tied directly to your Discord account balance, so you can only spend what you have available.
+
+<Steps>
+<Step title="Join our Discord server">
+  First, you'll need to join our Discord community to access the bot.
+  
+  <Card
+    title="Join Discord"
+    icon="discord"
+    href="https://discord.gg/nicealts"
+  >
+    Click here to join our Discord server
+  </Card>
+</Step>
+
+<Step title="Use the slash command">
+  Once you're in the server, use the `/api-key` slash command to generate your unique API key.
+  
+  ```
+  /api-key
+  ```
+  
+  The bot will generate a new API key for you and display it in a private message.
+</Step>
+
+<Step title="Save your API key">
+  Copy the generated API key and store it securely. You'll need it for all API requests.
+  
+  <Warning>
+  Your API key is sensitive! Anyone with access to it can make purchases using your Discord balance. Store it securely and never share it publicly.
+  </Warning>
+</Step>
+</Steps>
+
+## Using your API key
+
+Include your API key in the `Authorization` header of every request:
+
+```
+Authorization: Bearer YOUR_API_KEY_HERE
+```
+
+### Example
+
+Here's how to include your API key in a request:
+
+<CodeGroup>
+```bash cURL
+curl -H "Authorization: Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1" \
+     https://api.nicealts.com/v1/stock
+```
+
+```python Python
+import requests
+
+headers = {
+    "Authorization": "Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1"
+}
+
+response = requests.get("https://api.nicealts.com/v1/stock", headers=headers)
+```
+
+```javascript JavaScript
+const headers = {
+    "Authorization": "Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1"
+};
+
+fetch("https://api.nicealts.com/v1/stock", { headers })
+    .then(response => response.json())
+    .then(data => console.log(data));
+```
+</CodeGroup>
+
+## API key format
+
+Your API key will look something like this:
+
+```
+x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1
+```
+
+- **Length:** 40 characters
+- **Format:** Alphanumeric string
+- **Case:** Case-sensitive
+
+## Security best practices
+
+<Warning>
+**Important security considerations:**
+</Warning>
+
+- **Never commit API keys to version control** - Use environment variables instead
+- **Don't share API keys publicly** - Anyone with your key can spend your credits
+- **Rotate keys regularly** - Generate new keys periodically for better security
+- **Use HTTPS only** - Always make requests over secure connections
+
+### Environment variables
+
+Store your API key as an environment variable:
+
+<CodeGroup>
+```bash .env
+NICEALTS_API_KEY=x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1
+```
+
+```python Python
+import os
+
+api_key = os.getenv("NICEALTS_API_KEY")
+headers = {"Authorization": f"Bearer {api_key}"}
+```
+
+```javascript JavaScript
+const apiKey = process.env.NICEALTS_API_KEY;
+const headers = {"Authorization": `Bearer ${apiKey}`};
+```
+</CodeGroup>
+
+## Troubleshooting authentication
+
+### Invalid API key error
+
+If you receive a `401 Unauthorized` error:
+
+<AccordionGroup>
+<Accordion title="Check your API key format">
+  Make sure you're using the correct format:
+  
+  ```
+  Authorization: Bearer YOUR_API_KEY_HERE
+  ```
+  
+  Note the space between "Bearer" and your key.
+</Accordion>
+
+<Accordion title="Verify your API key">
+  Double-check that you copied the API key correctly from Discord. API keys are case-sensitive.
+</Accordion>
+
+<Accordion title="Generate a new key">
+  If you're still having issues, try generating a new API key using `/api-key` in Discord.
+</Accordion>
+</AccordionGroup>
+
+### Insufficient balance error
+
+If you receive a `402 Payment Required` error:
+
+<Info>
+This means you don't have enough credits in your Discord account balance to complete the purchase.
+</Info>
+
+1. Check your balance using the Discord bot
+2. Purchase more credits if needed
+3. Retry your API request
+
+## Need help?
+
+<Card
+  title="Join our Discord"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Get help with authentication issues from our community
+</Card>

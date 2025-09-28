@@ -1,0 +1,120 @@
+---
+title: "API Overview"
+description: "Everything you need to know about the NiceAlts API"
+---
+
+## What is the NiceAlts API?
+
+The NiceAlts API lets you purchase Minecraft accounts programmatically using your Discord account balance. No more manual clicking through Discord bots - just clean, simple API calls that integrate seamlessly into your applications.
+
+## Key features
+
+<Columns cols={2}>
+  <Card title="Secure Authentication" icon="shield">
+    API key authentication tied to your Discord account balance
+  </Card>
+  <Card title="Multiple Account Types" icon="list">
+    AccessToken and Cookie-based accounts with different quality levels
+  </Card>
+  <Card title="Optional Prechecking" icon="check-circle">
+    Validate accounts before delivery to ensure quality
+  </Card>
+  <Card title="Real-time Stock" icon="chart-line">
+    Always know what's available before placing orders
+  </Card>
+  <Card title="Fast Delivery" icon="bolt">
+    Get accounts delivered in seconds, not minutes
+  </Card>
+  <Card title="Developer Friendly" icon="code">
+    Clean REST API with comprehensive documentation
+  </Card>
+</Columns>
+
+## Base URL
+
+All API requests are made to:
+
+```
+https://api.nicealts.com
+```
+
+<Info>
+We also provide a direct IP endpoint at `http://185.14.92.70:8080` for users who prefer direct connections.
+</Info>
+
+## Authentication
+
+Every request requires an API key obtained from our Discord bot. Include it in the Authorization header:
+
+```
+Authorization: Bearer YOUR_API_KEY_HERE
+```
+
+<Warning>
+Keep your API key secure! Anyone with access to it can make purchases using your Discord balance.
+</Warning>
+
+## Available endpoints
+
+<CardGroup cols={2}>
+  <Card title="Get Stock" icon="chart-bar" href="/api-reference/endpoints/stock">
+    Check available products, prices, and stock counts
+  </Card>
+  <Card title="Purchase Accounts" icon="shopping-cart" href="/api-reference/endpoints/order">
+    Buy accounts with optional prechecking
+  </Card>
+</CardGroup>
+
+## Account types
+
+We offer three types of Minecraft accounts:
+
+### Unban (AccessToken)
+- **Price:** 50 credits
+- **Quality:** High
+- **Best for:** Most use cases, reliable and fast
+- **Prechecking:** Available
+
+### Ban (AccessToken)
+- **Price:** 30 credits
+- **Quality:** Standard
+- **Best for:** Budget-conscious users
+- **Prechecking:** Available
+
+### Unban HQ (Cookie)
+- **Price:** 100 credits
+- **Quality:** Premium
+- **Best for:** High-value applications
+- **Prechecking:** Available
+
+## Prechecking options
+
+When placing orders, you can choose from two prechecking levels:
+
+- **`none`** - No prechecking (faster delivery, lower cost)
+- **`full`** - Full validation (checks account validity and ban status)
+
+<Tip>
+Use full prechecking for important applications where account quality is critical. Use none for bulk purchases where speed matters more.
+</Tip>
+
+## Rate limits
+
+To ensure fair usage, we implement the following rate limits:
+
+- **100 requests per minute** per API key
+- **10 orders per minute** per API key
+
+Rate limit information is included in response headers:
+
+- `X-RateLimit-Limit` - Your rate limit
+- `X-RateLimit-Remaining` - Requests remaining in current window
+- `X-RateLimit-Reset` - When the rate limit resets
+
+## Error handling
+
+The API uses standard HTTP status codes and returns detailed error messages in JSON format. See our [error handling guide](/api-reference/error-handling) for complete details.
+
+## Getting started
+
+Ready to start using the API? Check out our [quickstart guide](/quickstart) to get your API key and make your first purchase in under 5 minutes!

@@ -1,0 +1,171 @@
+---
+title: "Get Stock Information"
+description: "Check available products, prices, and stock counts"
+---
+
+## Overview
+
+The stock endpoint lets you check what Minecraft accounts are currently available, their prices, and how many are in stock. This is useful for building inventory management systems or checking availability before placing orders.
+
+## Endpoint
+
+```
+GET /v1/stock
+```
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Your API key in Bearer format: `Bearer YOUR_API_KEY_HERE`
+</ParamField>
+
+## Response
+
+<ResponseField name="product_name" type="object">
+  Information about each available product.
+  
+  <Expandable title="Product properties">
+    <ResponseField name="price" type="integer" required>
+      Price in credits for this product type.
+    </ResponseField>
+    
+    <ResponseField name="stock" type="integer" required>
+      Number of accounts currently available in stock.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example request
+
+<RequestExample>
+```bash cURL
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     https://api.nicealts.com/v1/stock
+```
+</RequestExample>
+
+## Example response
+
+<ResponseExample>
+```json Success
+{
+  "Unban (AccessToken)": {
+    "price": 50,
+    "stock": 150
+  },
+  "Ban (AccessToken)": {
+    "price": 30,
+    "stock": 75
+  },
+  "Unban HQ (Cookie)": {
+    "price": 100,
+    "stock": 25
+  }
+}
+```
+</ResponseExample>
+
+## Available products
+
+The stock endpoint returns information about these product types:
+
+### Unban (AccessToken)
+- **Description:** High-quality unbanned AccessToken accounts
+- **Typical price:** 50 credits
+- **Best for:** Most applications, reliable performance
+
+### Ban (AccessToken)
+- **Description:** Standard banned AccessToken accounts
+- **Typical price:** 30 credits
+- **Best for:** Budget-conscious users
+
+### Unban HQ (Cookie)
+- **Description:** Premium unbanned Cookie accounts
+- **Typical price:** 100 credits
+- **Best for:** High-value applications requiring top quality
+
+<Info>
+Stock levels and prices may vary based on current inventory and market conditions. Always check the stock endpoint before placing orders.
+</Info>
+
+## Error responses
+
+### Invalid API key
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Invalid API key"
+}
+```
+</ResponseExample>
+
+### Rate limit exceeded
+
+<ResponseExample>
+```json Error
+{
+  "detail": "Rate limit exceeded. Try again later."
+}
+```
+</ResponseExample>
+
+## Rate limits
+
+- **100 requests per minute** per API key
+- Rate limit headers included in response:
+  - `X-RateLimit-Limit`
+  - `X-RateLimit-Remaining`
+  - `X-RateLimit-Reset`
+
+## Use cases
+
+### Inventory monitoring
+
+Check stock levels regularly to monitor availability:
+
+```python
+import requests
+import time
+
+def monitor_stock():
+    while True:
+        response = requests.get(
+            "https://api.nicealts.com/v1/stock",
+            headers={"Authorization": "Bearer YOUR_API_KEY"}
+        )
+        stock = response.json()
+        
+        for product, info in stock.items():
+            if info["stock"] < 10:
+                print(f"Low stock alert: {product} has {info['stock']} remaining")
+        
+        time.sleep(60)  # Check every minute
+```
+
+### Price comparison
+
+Compare prices across different product types:
+
+```javascript
+async function comparePrices() {
+    const response = await fetch("https://api.nicealts.com/v1/stock", {
+        headers: { "Authorization": "Bearer YOUR_API_KEY" }
+    });
+    const stock = await response.json();
+    
+    const products = Object.entries(stock).map(([name, info]) => ({
+        name,
+        price: info.price,
+        stock: info.stock,
+        pricePerStock: info.price / info.stock
+    }));
+    
+    products.sort((a, b) => a.price - b.price);
+    console.log("Products sorted by price:", products);
+}
+```
+
+<Tip>
+**Pro tip:** Check stock before placing large orders to avoid partial fulfillment. The stock endpoint updates in real-time, so you'll always get current availability.
+</Tip>
