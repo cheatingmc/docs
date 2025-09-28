@@ -1,103 +1,244 @@
 ---
-title: "Welcome to NiceAlts API"
-description: "Purchase Minecraft accounts programmatically with our simple, powerful API"
+title: "NiceAlts Wiki"
+description: "Your complete guide to purchasing Minecraft accounts - from Discord bot to API integration"
 ---
 
-## Hey there! 👋
+## Welcome to NiceAlts! 🎮
 
-Welcome to the NiceAlts API documentation! We're excited to have you here. Our API makes it super easy to purchase Minecraft accounts programmatically using your Discord account balance. No more manual clicking through Discord bots - just clean, simple API calls.
+Your one-stop destination for high-quality Minecraft accounts. Whether you're a casual buyer or a developer looking to automate purchases, we've got you covered with both manual and programmatic options.
 
-<Card
-  title="Get started in 5 minutes"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Jump right in with our quickstart guide and make your first API call.
-</Card>
+## How to get started
 
-## What makes us special
-
-We've built this API with developers in mind - here's what you'll love about it:
+Choose your preferred method to purchase Minecraft accounts:
 
 <Columns cols={2}>
   <Card
-    title="Lightning fast"
-    icon="bolt"
-    href="/api-reference/overview"
+    title="Discord Bot (Manual)"
+    icon="discord"
+    href="/manual-purchasing"
+    horizontal
   >
-    Get accounts delivered in seconds, not minutes. Our infrastructure is built for speed.
+    Buy accounts directly through our Discord bot - perfect for casual users and one-time purchases.
   </Card>
   <Card
-    title="Developer friendly"
+    title="API (Automated)"
     icon="code"
-    href="/examples/curl"
+    href="/quickstart"
+    horizontal
   >
-    Clean REST API with comprehensive examples in multiple languages.
+    Integrate our API into your applications for automated, programmatic account purchasing.
   </Card>
+</Columns>
+
+## Manual purchasing via Discord
+
+### Getting started with the Discord bot
+
+<Steps>
+<Step title="Join our Discord server">
+  Head over to our Discord community to access the bot and purchase accounts manually.
+  
   <Card
-    title="Flexible options"
-    icon="sliders"
-    href="/api-reference/endpoints/order"
+    title="Join Discord"
+    icon="discord"
+    href="https://discord.gg/nicealts"
   >
-    Choose between AccessToken and Cookie accounts with optional prechecking.
+    Click here to join our Discord server
   </Card>
+</Step>
+
+<Step title="Purchase credits">
+  Use the bot commands to buy credits for your account:
+  
+  ```
+  /buy-credits
+  ```
+  
+  Credits are used to purchase Minecraft accounts and can be bought with various payment methods.
+</Step>
+
+<Step title="Browse available accounts">
+  Check what accounts are currently available:
+  
+  ```
+  /stock
+  ```
+  
+  This shows you all available account types, prices, and current stock levels.
+</Step>
+
+<Step title="Purchase accounts">
+  Buy accounts using your credits:
+  
+  ```
+  /buy [account-type] [quantity]
+  ```
+  
+  Example: `/buy unban 2` to purchase 2 unbanned accounts.
+</Step>
+</Steps>
+
+### Available account types
+
+<Columns cols={3}>
+  <Card title="Unban (AccessToken)" icon="shield-check">
+    **Price:** 50 credits each
+    **Quality:** High
+    **Best for:** Most applications
+  </Card>
+  <Card title="Ban (AccessToken)" icon="shield">
+    **Price:** 30 credits each
+    **Quality:** Standard
+    **Best for:** Budget-conscious users
+  </Card>
+  <Card title="Unban HQ (Cookie)" icon="crown">
+    **Price:** 100 credits each
+    **Quality:** Premium
+    **Best for:** High-value applications
+  </Card>
+</Columns>
+
+## API integration for developers
+
+### Why use the API?
+
+The NiceAlts API is perfect for:
+- **Automation scripts** - Automate account purchasing for your projects
+- **Web applications** - Integrate account purchasing into your websites
+- **Bulk operations** - Purchase large quantities efficiently
+- **Custom workflows** - Build custom tools and applications
+
+### Quick API start
+
+<Card
+  title="API Quickstart"
+  icon="rocket"
+  href="/quickstart"
+>
+  Get your API key and make your first automated purchase in under 5 minutes.
+</Card>
+
+### API features
+
+<Columns cols={2}>
   <Card
-    title="Always in stock"
+    title="Real-time stock"
     icon="chart-line"
     href="/api-reference/endpoints/stock"
   >
-    Real-time stock information so you know what's available before ordering.
+    Check availability and prices before placing orders
+  </Card>
+  <Card
+    title="Flexible purchasing"
+    icon="shopping-cart"
+    href="/api-reference/endpoints/order"
+  >
+    Choose account types, quantities, and prechecking options
+  </Card>
+  <Card
+    title="Multiple languages"
+    icon="code"
+    href="/examples/curl"
+  >
+    Examples in Python, JavaScript, PHP, Go, and cURL
+  </Card>
+  <Card
+    title="Error handling"
+    icon="exclamation-triangle"
+    href="/api-reference/error-handling"
+  >
+    Comprehensive error handling and rate limiting
   </Card>
 </Columns>
 
-## Ready to dive in?
+## Account types explained
 
-Pick your preferred language and start building:
+### AccessToken accounts
+- **Format:** `email:password:access_token`
+- **Use case:** Most applications and tools
+- **Quality:** High reliability and fast delivery
+- **Prechecking:** Available to validate accounts before delivery
+
+### Cookie accounts
+- **Format:** `email:password:cookie_data`
+- **Use case:** Advanced applications requiring session data
+- **Quality:** Premium quality with session information
+- **Prechecking:** Available for quality assurance
+
+<Info>
+**Prechecking:** Optional validation that ensures accounts are working and not banned before delivery. Adds a small delay but guarantees quality.
+</Info>
+
+## Payment and credits
+
+### How credits work
+- Credits are your account balance for purchasing accounts
+- 1 credit = 1 unit of account value
+- Credits are tied to your Discord account
+- Purchase credits using various payment methods through the Discord bot
+
+### Payment methods
+- **Cryptocurrency** - Bitcoin, Ethereum, and other major cryptocurrencies
+- **PayPal** - Direct PayPal payments
+- **Credit/Debit cards** - Traditional payment methods
+- **Gift cards** - Various gaming and retail gift cards
+
+### Credit pricing
+- Credits are sold in packages with volume discounts
+- Check current pricing in Discord using `/credits-pricing`
+- Bulk purchases offer better rates
+
+## Getting help
+
+### Support channels
 
 <Columns cols={2}>
   <Card
-    title="Python"
-    icon="python"
-    href="/examples/python"
+    title="Discord Community"
+    icon="discord"
+    href="https://discord.gg/nicealts"
   >
-    Perfect for automation scripts and web applications.
+    Join our Discord for real-time support, updates, and community discussions
   </Card>
   <Card
-    title="JavaScript"
-    icon="js"
-    href="/examples/javascript"
+    title="API Documentation"
+    icon="book"
+    href="/api-reference/overview"
   >
-    Great for Node.js apps and browser-based tools.
-  </Card>
-  <Card
-    title="cURL"
-    icon="terminal"
-    href="/examples/curl"
-  >
-    Simple command-line examples for testing and quick scripts.
-  </Card>
-  <Card
-    title="PHP"
-    icon="php"
-    href="/examples/php"
-  >
-    Ideal for web applications and server-side automation.
+    Complete API reference with examples and troubleshooting guides
   </Card>
 </Columns>
 
-## Need help?
+### Common questions
 
-We're here to help you succeed! Join our Discord community for support, updates, and to connect with other developers.
+<AccordionGroup>
+<Accordion title="How do I get started?">
+  Join our Discord server and use `/help` to see all available commands. For API access, check out our [quickstart guide](/quickstart).
+</Accordion>
+
+<Accordion title="What's the difference between manual and API purchasing?">
+  Manual purchasing is done through Discord bot commands - perfect for casual users. API purchasing is programmatic and ideal for developers who want to automate the process.
+</Accordion>
+
+<Accordion title="How do I get an API key?">
+  Use the `/api-key` command in Discord to generate your unique API key. Keep it secure as it's tied to your account balance.
+</Accordion>
+
+<Accordion title="What if I have issues with my accounts?">
+  Contact support in Discord with your order details. We provide replacements for accounts that don't work as expected.
+</Accordion>
+</AccordionGroup>
+
+## Ready to get started?
 
 <Card
-  title="Join our Discord"
+  title="Join Discord and start purchasing"
   icon="discord"
   href="https://discord.gg/nicealts"
 >
-  Get help from our community and stay updated on new features.
+  Join our community to start buying accounts manually or get your API key for automation
 </Card>
 
 <Tip>
-**Pro tip:** Start with the quickstart guide to get your API key and make your first purchase in under 5 minutes!
+**New to NiceAlts?** Start with manual purchasing through Discord to get familiar with our service, then explore the API for automation needs!
 </Tip>

@@ -1,0 +1,296 @@
+---
+title: "Manual Purchasing Guide"
+description: "Complete guide to purchasing Minecraft accounts through the Discord bot"
+---
+
+## Overview
+
+This guide covers everything you need to know about purchasing Minecraft accounts manually through our Discord bot. Perfect for casual users who want to buy accounts without any programming knowledge.
+
+## Getting started
+
+### Step 1: Join our Discord server
+
+First, you'll need to join our Discord community to access the bot:
+
+<Card
+  title="Join Discord"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Click here to join our Discord server
+</Card>
+
+### Step 2: Get familiar with the bot
+
+Once you're in the server, you can start using the bot commands. Here are the essential commands to get you started:
+
+```
+/help - Shows all available commands
+/stock - Check available accounts and prices
+/balance - Check your current credit balance
+/buy-credits - Purchase credits for your account
+```
+
+## Purchasing credits
+
+Before you can buy accounts, you'll need credits in your account balance.
+
+### How to buy credits
+
+1. Use the `/buy-credits` command in Discord
+2. Choose your preferred payment method
+3. Follow the payment instructions
+4. Credits will be added to your account automatically
+
+### Payment methods
+
+We accept various payment methods for purchasing credits:
+
+- **Cryptocurrency** - Bitcoin, Ethereum, Litecoin, and other major cryptocurrencies
+- **PayPal** - Direct PayPal payments (instant processing)
+- **Credit/Debit cards** - Visa, Mastercard, American Express
+- **Gift cards** - Steam, Amazon, Google Play, and other gaming gift cards
+
+### Credit packages
+
+Credits are sold in packages with volume discounts:
+
+- **Small package** - 100 credits (perfect for trying out the service)
+- **Medium package** - 500 credits (good for regular users)
+- **Large package** - 1000+ credits (best value for bulk buyers)
+
+<Info>
+Check current pricing and available packages using `/credits-pricing` in Discord.
+</Info>
+
+## Checking stock and prices
+
+### View available accounts
+
+Use the `/stock` command to see what accounts are currently available:
+
+```
+/stock
+```
+
+This will show you:
+- Available account types
+- Current prices in credits
+- Stock levels for each type
+- Quality information
+
+### Account types explained
+
+<Columns cols={3}>
+  <Card title="Unban (AccessToken)" icon="shield-check">
+    **Price:** 50 credits each
+    **Quality:** High
+    **Format:** email:password:access_token
+    **Best for:** Most applications and tools
+  </Card>
+  <Card title="Ban (AccessToken)" icon="shield">
+    **Price:** 30 credits each
+    **Quality:** Standard
+    **Format:** email:password:access_token
+    **Best for:** Budget-conscious users
+  </Card>
+  <Card title="Unban HQ (Cookie)" icon="crown">
+    **Price:** 100 credits each
+    **Quality:** Premium
+    **Format:** email:password:cookie_data
+    **Best for:** High-value applications
+  </Card>
+</Columns>
+
+## Purchasing accounts
+
+### Basic purchase command
+
+To buy accounts, use the `/buy` command:
+
+```
+/buy [account-type] [quantity]
+```
+
+### Examples
+
+```
+/buy unban 1          # Buy 1 unbanned AccessToken account
+/buy ban 3            # Buy 3 banned AccessToken accounts
+/buy cookie 2         # Buy 2 premium Cookie accounts
+```
+
+### Purchase options
+
+Some account types support additional options:
+
+```
+/buy unban 1 precheck:full    # Buy with full prechecking
+/buy unban 1 precheck:none    # Buy without prechecking (faster)
+```
+
+<Info>
+**Prechecking:** Optional validation that ensures accounts are working before delivery. Adds a small delay but guarantees quality. Available for all account types.
+</Info>
+
+## Understanding your purchase
+
+### What you'll receive
+
+After a successful purchase, you'll receive:
+
+1. **Account details** - Email, password, and access token/cookie data
+2. **Delivery format** - Each account on a separate line
+3. **Order confirmation** - Purchase details and timestamp
+
+### Example delivery format
+
+```
+email1@example.com:password123:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+email2@example.com:password456:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Using your accounts
+
+- **AccessToken accounts**: Use the email, password, and access token for authentication
+- **Cookie accounts**: Use the email, password, and cookie data for session-based authentication
+
+<Warning>
+Keep your account details secure! Never share them publicly or store them in unsecured locations.
+</Warning>
+
+## Managing your account
+
+### Check your balance
+
+Use `/balance` to see your current credit balance:
+
+```
+/balance
+```
+
+This shows:
+- Current credit balance
+- Recent transactions
+- Account status
+
+### View purchase history
+
+Use `/history` to see your recent purchases:
+
+```
+/history
+```
+
+This displays:
+- Recent orders
+- Account types purchased
+- Purchase dates and times
+- Order status
+
+### Get support
+
+If you have issues with your accounts or need help:
+
+1. Use `/support` to open a support ticket
+2. Provide your order details
+3. Describe the issue clearly
+4. Our support team will help you resolve it
+
+## Tips for successful purchases
+
+### Before purchasing
+
+- **Check stock levels** - Use `/stock` to ensure accounts are available
+- **Verify your balance** - Use `/balance` to confirm you have enough credits
+- **Choose the right type** - Consider your use case when selecting account types
+
+### During purchase
+
+- **Use correct syntax** - Follow the command format exactly
+- **Be patient** - Some purchases may take a few moments to process
+- **Don't spam commands** - Wait for responses before trying again
+
+### After purchase
+
+- **Save account details** - Store them securely for future use
+- **Test accounts quickly** - Verify they work as expected
+- **Contact support if needed** - We provide replacements for non-working accounts
+
+## Troubleshooting
+
+### Common issues
+
+<AccordionGroup>
+<Accordion title="Insufficient balance">
+  **Problem:** Not enough credits for the purchase
+  **Solution:** Use `/buy-credits` to purchase more credits
+</Accordion>
+
+<Accordion title="Out of stock">
+  **Problem:** No accounts available of the requested type
+  **Solution:** Check `/stock` for available types or wait for restock
+</Accordion>
+
+<Accordion title="Invalid command format">
+  **Problem:** Command not recognized
+  **Solution:** Use `/help` to see correct command syntax
+</Accordion>
+
+<Accordion title="Account not working">
+  **Problem:** Received account doesn't work
+  **Solution:** Use `/support` with order details for replacement
+</Accordion>
+</AccordionGroup>
+
+### Getting help
+
+If you're still having issues:
+
+<Card
+  title="Contact Support"
+  icon="headset"
+  href="https://discord.gg/nicealts"
+>
+  Join our Discord and use the support channels for help
+</Card>
+
+## Advanced features
+
+### Bulk purchasing
+
+For large quantities, consider using our API for better efficiency:
+
+<Card
+  title="API Documentation"
+  icon="code"
+  href="/api-reference/overview"
+>
+  Learn about programmatic purchasing for bulk operations
+</Card>
+
+### Account validation
+
+All accounts come with basic validation, but you can request additional prechecking:
+
+- **Full prechecking** - Validates account functionality and ban status
+- **No prechecking** - Faster delivery, standard validation only
+
+### Custom orders
+
+For special requirements or large bulk orders, contact our support team for custom solutions.
+
+## Ready to start purchasing?
+
+<Card
+  title="Join Discord and start buying"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Join our community and start purchasing Minecraft accounts today
+</Card>
+
+<Tip>
+**New user?** Start with a small purchase to test the service, then scale up as needed. We're here to help you succeed!
+</Tip>
