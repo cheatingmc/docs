@@ -1,0 +1,806 @@
+---
+title: "Go Examples"
+description: "Go code examples for the NiceAlts API"
+---
+
+## Overview
+
+Go is perfect for high-performance applications, microservices, and command-line tools. These examples show you how to integrate the NiceAlts API into your Go projects.
+
+## Basic setup
+
+No external dependencies are required - Go's built-in `net/http` package is sufficient. For JSON handling, we'll use the standard `encoding/json` package.
+
+## Basic examples
+
+### Check stock
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+const (
+    API_KEY  = "YOUR_API_KEY_HERE"
+    BASE_URL = "https://api.nicealts.com"
+)
+
+type StockResponse map[string]struct {
+    Price int `json:"price"`
+    Stock int `json:"stock"`
+}
+
+func checkStock() (*StockResponse, error) {
+    client := &http.Client{Timeout: 30 * time.Second}
+    
+    req, err := http.NewRequest("GET", BASE_URL+"/v1/stock", nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create request: %v", err)
+    }
+    
+    req.Header.Set("Authorization", "Bearer "+API_KEY)
+    
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("request failed: %v", err)
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("API error: %s", string(body))
+    }
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read response: %v", err)
+    }
+    
+    var stock StockResponse
+    if err := json.Unmarshal(body, &stock); err != nil {
+        return nil, fmt.Errorf("failed to parse JSON: %v", err)
+    }
+    
+    return &stock, nil
+}
+
+func main() {
+    stock, err := checkStock()
+    if err != nil {
+        fmt.Printf("Error checking stock: %v\n", err)
+        return
+    }
+    
+    fmt.Println("Current stock:")
+    for product, info := range *stock {
+        fmt.Printf("%s: %d available for %d credits\n", product, info.Stock, info.Price)
+    }
+}
+```
+
+### Purchase accounts
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+const (
+    API_KEY  = "YOUR_API_KEY_HERE"
+    BASE_URL = "https://api.nicealts.com"
+)
+
+type OrderRequest struct {
+    Product  string `json:"product"`
+    Quantity int    `json:"quantity"`
+    Precheck string `json:"precheck"`
+}
+
+func purchaseAccounts(product string, quantity int, precheck string) (string, error) {
+    client := &http.Client{Timeout: 30 * time.Second}
+    
+    orderData := OrderRequest{
+        Product:  product,
+        Quantity: quantity,
+        Precheck: precheck,
+    }
+    
+    jsonData, err := json.Marshal(orderData)
+    if err != nil {
+        return "", fmt.Errorf("failed to marshal JSON: %v", err)
+    }
+    
+    req, err := http.NewRequest("POST", BASE_URL+"/v1/order", bytes.NewBuffer(jsonData))
+    if err != nil {
+        return "", fmt.Errorf("failed to create request: %v", err)
+    }
+    
+    req.Header.Set("Authorization", "Bearer "+API_KEY)
+    req.Header.Set("Content-Type", "application/json")
+    
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("request failed: %v", err)
+    }
+    defer resp.Body.Close()
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", fmt.Errorf("failed to read response: %v", err)
+    }
+    
+    if resp.StatusCode != http.StatusOK {
+        return "", fmt.Errorf("API error: %s", string(body))
+    }
+    
+    return string(body), nil
+}
+
+func main() {
+    accounts, err := purchaseAccounts("Unban (AccessToken)", 1, "full")
+    if err != nil {
+        fmt.Printf("Error purchasing accounts: %v\n", err)
+        return
+    }
+    
+    fmt.Println("Purchase successful!")
+    fmt.Println("Accounts received:")
+    fmt.Println(accounts)
+}
+```
+
+## Advanced examples
+
+### Stock monitoring with alerts
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+type StockMonitor struct {
+    apiKey         string
+    baseURL        string
+    alertThreshold int
+}
+
+func NewStockMonitor(apiKey string, alertThreshold int) *StockMonitor {
+    return &StockMonitor{
+        apiKey:         apiKey,
+        baseURL:        "https://api.nicealts.com",
+        alertThreshold: alertThreshold,
+    }
+}
+
+func (sm *StockMonitor) checkStock() (map[string]struct {
+    Price int `json:"price"`
+    Stock int `json:"stock"`
+}, error) {
+    client := &http.Client{Timeout: 30 * time.Second}
+    
+    req, err := http.NewRequest("GET", sm.baseURL+"/v1/stock", nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create request: %v", err)
+    }
+    
+    req.Header.Set("Authorization", "Bearer "+sm.apiKey)
+    
+    resp, err := client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("request failed: %v", err)
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("API error: %s", string(body))
+    }
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read response: %v", err)
+    }
+    
+    var stock map[string]struct {
+        Price int `json:"price"`
+        Stock int `json:"stock"`
+    }
+    
+    if err := json.Unmarshal(body, &stock); err != nil {
+        return nil, fmt.Errorf("failed to parse JSON: %v", err)
+    }
+    
+    return stock, nil
+}
+
+func (sm *StockMonitor) monitorStock(interval time.Duration) {
+    fmt.Printf("Starting stock monitoring (checking every %v)...\n", interval)
+    
+    ticker := time.NewTicker(interval)
+    defer ticker.Stop()
+    
+    for {
+        select {
+        case <-ticker.C:
+            stock, err := sm.checkStock()
+            if err != nil {
+                fmt.Printf("Error checking stock: %v\n", err)
+                continue
+            }
+            
+            timestamp := time.Now().Format("2006-01-02 15:04:05")
+            fmt.Printf("\n[%s] Stock update:\n", timestamp)
+            
+            for product, info := range stock {
+                fmt.Printf("  %s: %d available\n", product, info.Stock)
+                
+                if info.Stock < sm.alertThreshold {
+                    fmt.Printf("  ⚠️  LOW STOCK ALERT: %s has only %d left!\n", product, info.Stock)
+                }
+            }
+        }
+    }
+}
+
+func main() {
+    monitor := NewStockMonitor("YOUR_API_KEY_HERE", 10)
+    monitor.monitorStock(30 * time.Second) // Check every 30 seconds
+}
+```
+
+### Bulk purchasing with error handling
+
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+type NiceAltsAPI struct {
+    apiKey  string
+    baseURL string
+    client  *http.Client
+}
+
+type OrderRequest struct {
+    Product  string `json:"product"`
+    Quantity int    `json:"quantity"`
+    Precheck string `json:"precheck"`
+}
+
+type PurchaseResult struct {
+    Success  bool   `json:"success"`
+    Product  string `json:"product"`
+    Quantity int    `json:"quantity"`
+    Accounts string `json:"accounts,omitempty"`
+    Error    string `json:"error,omitempty"`
+}
+
+func NewNiceAltsAPI(apiKey string) *NiceAltsAPI {
+    return &NiceAltsAPI{
+        apiKey:  apiKey,
+        baseURL: "https://api.nicealts.com",
+        client:  &http.Client{Timeout: 30 * time.Second},
+    }
+}
+
+func (api *NiceAltsAPI) makeRequest(endpoint, method string, data interface{}) ([]byte, error) {
+    var body io.Reader
+    
+    if data != nil {
+        jsonData, err := json.Marshal(data)
+        if err != nil {
+            return nil, fmt.Errorf("failed to marshal JSON: %v", err)
+        }
+        body = bytes.NewBuffer(jsonData)
+    }
+    
+    req, err := http.NewRequest(method, api.baseURL+endpoint, body)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create request: %v", err)
+    }
+    
+    req.Header.Set("Authorization", "Bearer "+api.apiKey)
+    if data != nil {
+        req.Header.Set("Content-Type", "application/json")
+    }
+    
+    resp, err := api.client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("request failed: %v", err)
+    }
+    defer resp.Body.Close()
+    
+    responseBody, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read response: %v", err)
+    }
+    
+    if resp.StatusCode != http.StatusOK {
+        return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(responseBody))
+    }
+    
+    return responseBody, nil
+}
+
+func (api *NiceAltsAPI) getStock() (map[string]struct {
+    Price int `json:"price"`
+    Stock int `json:"stock"`
+}, error) {
+    body, err := api.makeRequest("/v1/stock", "GET", nil)
+    if err != nil {
+        return nil, err
+    }
+    
+    var stock map[string]struct {
+        Price int `json:"price"`
+        Stock int `json:"stock"`
+    }
+    
+    if err := json.Unmarshal(body, &stock); err != nil {
+        return nil, fmt.Errorf("failed to parse JSON: %v", err)
+    }
+    
+    return stock, nil
+}
+
+func (api *NiceAltsAPI) purchaseAccounts(product string, quantity int, precheck string, maxRetries int) (string, error) {
+    orderData := OrderRequest{
+        Product:  product,
+        Quantity: quantity,
+        Precheck: precheck,
+    }
+    
+    for attempt := 1; attempt <= maxRetries; attempt++ {
+        body, err := api.makeRequest("/v1/order", "POST", orderData)
+        if err != nil {
+            if attempt == maxRetries {
+                return "", err
+            }
+            
+            fmt.Printf("Attempt %d failed: %v\n", attempt, err)
+            time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
+            continue
+        }
+        
+        return string(body), nil
+    }
+    
+    return "", fmt.Errorf("max retries exceeded")
+}
+
+func (api *NiceAltsAPI) bulkPurchase(orders []OrderRequest) []PurchaseResult {
+    var results []PurchaseResult
+    
+    for _, order := range orders {
+        fmt.Printf("Purchasing %d %s accounts...\n", order.Quantity, order.Product)
+        
+        accounts, err := api.purchaseAccounts(order.Product, order.Quantity, order.Precheck, 3)
+        if err != nil {
+            result := PurchaseResult{
+                Success:  false,
+                Product:  order.Product,
+                Quantity: order.Quantity,
+                Error:    err.Error(),
+            }
+            results = append(results, result)
+            fmt.Printf("❌ Failed to purchase %s: %v\n", order.Product, err)
+        } else {
+            result := PurchaseResult{
+                Success:  true,
+                Product:  order.Product,
+                Quantity: order.Quantity,
+                Accounts: accounts,
+            }
+            results = append(results, result)
+            fmt.Printf("✅ Successfully purchased %d %s accounts\n", order.Quantity, order.Product)
+        }
+        
+        // Small delay between orders
+        time.Sleep(1 * time.Second)
+    }
+    
+    return results
+}
+
+func main() {
+    api := NewNiceAltsAPI("YOUR_API_KEY_HERE")
+    
+    // Define bulk orders
+    orders := []OrderRequest{
+        {Product: "Unban (AccessToken)", Quantity: 2, Precheck: "full"},
+        {Product: "Ban (AccessToken)", Quantity: 3, Precheck: "none"},
+        {Product: "Unban HQ (Cookie)", Quantity: 1, Precheck: "full"},
+    }
+    
+    results := api.bulkPurchase(orders)
+    
+    // Save results to JSON file
+    jsonData, err := json.MarshalIndent(results, "", "  ")
+    if err != nil {
+        fmt.Printf("Error marshaling results: %v\n", err)
+        return
+    }
+    
+    fmt.Printf("Results saved to purchase_results.json\n")
+    fmt.Printf("Results: %s\n", string(jsonData))
+}
+```
+
+## HTTP server example
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+type NiceAltsServer struct {
+    api *NiceAltsAPI
+}
+
+type APIResponse struct {
+    Success bool        `json:"success"`
+    Data    interface{} `json:"data,omitempty"`
+    Error   string      `json:"error,omitempty"`
+}
+
+func NewNiceAltsServer(apiKey string) *NiceAltsServer {
+    return &NiceAltsServer{
+        api: NewNiceAltsAPI(apiKey),
+    }
+}
+
+func (s *NiceAltsServer) handleStock(w http.ResponseWriter, r *http.Request) {
+    stock, err := s.api.getStock()
+    
+    response := APIResponse{}
+    if err != nil {
+        response.Success = false
+        response.Error = err.Error()
+        w.WriteHeader(http.StatusInternalServerError)
+    } else {
+        response.Success = true
+        response.Data = stock
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
+}
+
+func (s *NiceAltsServer) handlePurchase(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+    
+    var order OrderRequest
+    if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
+        response := APIResponse{
+            Success: false,
+            Error:   "Invalid JSON: " + err.Error(),
+        }
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(response)
+        return
+    }
+    
+    accounts, err := s.api.purchaseAccounts(order.Product, order.Quantity, order.Precheck, 3)
+    
+    response := APIResponse{}
+    if err != nil {
+        response.Success = false
+        response.Error = err.Error()
+        w.WriteHeader(http.StatusInternalServerError)
+    } else {
+        response.Success = true
+        response.Data = map[string]string{"accounts": accounts}
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
+}
+
+func main() {
+    server := NewNiceAltsServer("YOUR_API_KEY_HERE")
+    
+    http.HandleFunc("/api/stock", server.handleStock)
+    http.HandleFunc("/api/purchase", server.handlePurchase)
+    
+    fmt.Println("Server starting on :8080")
+    if err := http.ListenAndServe(":8080", nil); err != nil {
+        fmt.Printf("Server error: %v\n", err)
+    }
+}
+```
+
+## Command-line tool example
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "flag"
+    "fmt"
+    "io"
+    "net/http"
+    "os"
+    "time"
+)
+
+type CLI struct {
+    api *NiceAltsAPI
+}
+
+func NewCLI(apiKey string) *CLI {
+    return &CLI{
+        api: NewNiceAltsAPI(apiKey),
+    }
+}
+
+func (cli *CLI) stockCommand() {
+    stock, err := cli.api.getStock()
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        os.Exit(1)
+    }
+    
+    fmt.Println("Current stock:")
+    for product, info := range stock {
+        fmt.Printf("  %s: %d available for %d credits\n", product, info.Stock, info.Price)
+    }
+}
+
+func (cli *CLI) purchaseCommand(product string, quantity int, precheck string) {
+    accounts, err := cli.api.purchaseAccounts(product, quantity, precheck, 3)
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        os.Exit(1)
+    }
+    
+    fmt.Println("Purchase successful!")
+    fmt.Println("Accounts received:")
+    fmt.Println(accounts)
+}
+
+func main() {
+    var (
+        apiKey   = flag.String("key", "", "API key (required)")
+        command  = flag.String("cmd", "", "Command: stock or purchase")
+        product  = flag.String("product", "", "Product name for purchase")
+        quantity = flag.Int("quantity", 1, "Quantity for purchase")
+        precheck = flag.String("precheck", "full", "Precheck option: full or none")
+    )
+    flag.Parse()
+    
+    if *apiKey == "" {
+        fmt.Println("Error: API key is required")
+        flag.Usage()
+        os.Exit(1)
+    }
+    
+    cli := NewCLI(*apiKey)
+    
+    switch *command {
+    case "stock":
+        cli.stockCommand()
+    case "purchase":
+        if *product == "" {
+            fmt.Println("Error: product is required for purchase command")
+            os.Exit(1)
+        }
+        cli.purchaseCommand(*product, *quantity, *precheck)
+    default:
+        fmt.Println("Error: invalid command. Use 'stock' or 'purchase'")
+        flag.Usage()
+        os.Exit(1)
+    }
+}
+```
+
+## Environment variables
+
+For production use, store your API key in environment variables:
+
+```go
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    apiKey := os.Getenv("NICEALTS_API_KEY")
+    if apiKey == "" {
+        fmt.Println("Error: NICEALTS_API_KEY environment variable not set")
+        os.Exit(1)
+    }
+    
+    // Use the API key
+    api := NewNiceAltsAPI(apiKey)
+    
+    // Your code here...
+}
+```
+
+## Error handling best practices
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+type NiceAltsClient struct {
+    apiKey  string
+    baseURL string
+    client  *http.Client
+}
+
+func NewNiceAltsClient(apiKey string) *NiceAltsClient {
+    return &NiceAltsClient{
+        apiKey:  apiKey,
+        baseURL: "https://api.nicealts.com",
+        client: &http.Client{
+            Timeout: 30 * time.Second,
+        },
+    }
+}
+
+func (c *NiceAltsClient) makeRequest(endpoint, method string, data interface{}, maxRetries int) ([]byte, error) {
+    for attempt := 1; attempt <= maxRetries; attempt++ {
+        var body io.Reader
+        
+        if data != nil {
+            jsonData, err := json.Marshal(data)
+            if err != nil {
+                return nil, fmt.Errorf("failed to marshal JSON: %v", err)
+            }
+            body = bytes.NewBuffer(jsonData)
+        }
+        
+        req, err := http.NewRequest(method, c.baseURL+endpoint, body)
+        if err != nil {
+            return nil, fmt.Errorf("failed to create request: %v", err)
+        }
+        
+        req.Header.Set("Authorization", "Bearer "+c.apiKey)
+        if data != nil {
+            req.Header.Set("Content-Type", "application/json")
+        }
+        
+        resp, err := c.client.Do(req)
+        if err != nil {
+            if attempt == maxRetries {
+                return nil, fmt.Errorf("request failed after %d attempts: %v", maxRetries, err)
+            }
+            
+            fmt.Printf("Attempt %d failed: %v\n", attempt, err)
+            time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
+            continue
+        }
+        defer resp.Body.Close()
+        
+        responseBody, err := io.ReadAll(resp.Body)
+        if err != nil {
+            return nil, fmt.Errorf("failed to read response: %v", err)
+        }
+        
+        if resp.StatusCode == http.StatusOK {
+            return responseBody, nil
+        } else if resp.StatusCode == http.StatusTooManyRequests {
+            // Rate limited
+            if attempt < maxRetries {
+                waitTime := time.Duration(attempt) * time.Second
+                fmt.Printf("Rate limited. Waiting %v...\n", waitTime)
+                time.Sleep(waitTime)
+                continue
+            }
+        }
+        
+        return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(responseBody))
+    }
+    
+    return nil, fmt.Errorf("max retries exceeded")
+}
+
+func (c *NiceAltsClient) GetStock() (map[string]struct {
+    Price int `json:"price"`
+    Stock int `json:"stock"`
+}, error) {
+    body, err := c.makeRequest("/v1/stock", "GET", nil, 3)
+    if err != nil {
+        return nil, err
+    }
+    
+    var stock map[string]struct {
+        Price int `json:"price"`
+        Stock int `json:"stock"`
+    }
+    
+    if err := json.Unmarshal(body, &stock); err != nil {
+        return nil, fmt.Errorf("failed to parse JSON: %v", err)
+    }
+    
+    return stock, nil
+}
+
+func (c *NiceAltsClient) PurchaseAccounts(product string, quantity int, precheck string) (string, error) {
+    orderData := map[string]interface{}{
+        "product":  product,
+        "quantity": quantity,
+        "precheck": precheck,
+    }
+    
+    body, err := c.makeRequest("/v1/order", "POST", orderData, 3)
+    if err != nil {
+        return "", err
+    }
+    
+    return string(body), nil
+}
+
+// Usage
+func main() {
+    client := NewNiceAltsClient("YOUR_API_KEY_HERE")
+    
+    // Check stock
+    stock, err := client.GetStock()
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    
+    fmt.Println("Stock:", stock)
+    
+    // Purchase accounts
+    accounts, err := client.PurchaseAccounts("Unban (AccessToken)", 1, "full")
+    if err != nil {
+        fmt.Printf("Error: %v\n", err)
+        return
+    }
+    
+    fmt.Println("Accounts:", accounts)
+}
+```
+
+<Tip>
+**Pro tip:** Go's built-in `net/http` package is excellent for API clients. Use `context` for request timeouts and cancellation in production applications.
+</Tip>

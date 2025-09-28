@@ -1,0 +1,668 @@
+---
+title: "PHP Examples"
+description: "PHP code examples for the NiceAlts API"
+---
+
+## Overview
+
+PHP is perfect for web applications, server-side automation, and backend services. These examples show you how to integrate the NiceAlts API into your PHP projects.
+
+## Basic setup
+
+No additional dependencies are required - PHP's built-in `curl` functions are sufficient. For more advanced features, you can use Guzzle HTTP client:
+
+```bash
+composer require guzzlehttp/guzzle
+```
+
+## Basic examples
+
+### Check stock
+
+```php
+<?php
+function checkStock($apiKey) {
+    $baseUrl = "https://api.nicealts.com";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $baseUrl . "/v1/stock");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer " . $apiKey
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) {
+        echo "cURL Error: " . $error . "\n";
+        return null;
+    }
+    
+    if ($httpCode === 200) {
+        $stock = json_decode($response, true);
+        echo "Current stock:\n";
+        foreach ($stock as $product => $info) {
+            echo "{$product}: {$info['stock']} available for {$info['price']} credits\n";
+        }
+        return $stock;
+    } else {
+        $error = json_decode($response, true);
+        echo "Error checking stock: " . ($error['detail'] ?? 'Unknown error') . "\n";
+        return null;
+    }
+}
+
+// Usage
+$apiKey = "YOUR_API_KEY_HERE";
+$stock = checkStock($apiKey);
+?>
+```
+
+### Purchase accounts
+
+```php
+<?php
+function purchaseAccounts($apiKey, $product, $quantity, $precheck = "full") {
+    $baseUrl = "https://api.nicealts.com";
+    
+    $orderData = [
+        "product" => $product,
+        "quantity" => $quantity,
+        "precheck" => $precheck
+    ];
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $baseUrl . "/v1/order");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "Authorization: Bearer " . $apiKey,
+        "Content-Type: application/json"
+    ]);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($orderData));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) {
+        echo "cURL Error: " . $error . "\n";
+        return null;
+    }
+    
+    if ($httpCode === 200) {
+        echo "Purchase successful!\n";
+        echo "Accounts received:\n";
+        echo $response . "\n";
+        return $response;
+    } else {
+        $error = json_decode($response, true);
+        echo "Purchase failed: " . ($error['detail'] ?? 'Unknown error') . "\n";
+        return null;
+    }
+}
+
+// Usage
+$apiKey = "YOUR_API_KEY_HERE";
+$accounts = purchaseAccounts($apiKey, "Unban (AccessToken)", 1, "full");
+?>
+```
+
+## Advanced examples
+
+### Stock monitoring with alerts
+
+```php
+<?php
+class StockMonitor {
+    private $apiKey;
+    private $baseUrl;
+    private $alertThreshold;
+    
+    public function __construct($apiKey, $alertThreshold = 10) {
+        $this->apiKey = $apiKey;
+        $this->baseUrl = "https://api.nicealts.com";
+        $this->alertThreshold = $alertThreshold;
+    }
+    
+    public function checkStock() {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . "/v1/stock");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $this->apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            return json_decode($response, true);
+        }
+        
+        return null;
+    }
+    
+    public function monitorStock($intervalSeconds = 60) {
+        echo "Starting stock monitoring (checking every {$intervalSeconds} seconds)...\n";
+        
+        while (true) {
+            $stock = $this->checkStock();
+            if ($stock) {
+                $timestamp = date('Y-m-d H:i:s');
+                echo "\n[{$timestamp}] Stock update:\n";
+                
+                foreach ($stock as $product => $info) {
+                    echo "  {$product}: {$info['stock']} available\n";
+                    
+                    if ($info['stock'] < $this->alertThreshold) {
+                        echo "  ⚠️  LOW STOCK ALERT: {$product} has only {$info['stock']} left!\n";
+                    }
+                }
+            }
+            
+            sleep($intervalSeconds);
+        }
+    }
+}
+
+// Usage
+$monitor = new StockMonitor("YOUR_API_KEY_HERE");
+$monitor->monitorStock(30); // Check every 30 seconds
+?>
+```
+
+### Bulk purchasing with error handling
+
+```php
+<?php
+class NiceAltsAPI {
+    private $apiKey;
+    private $baseUrl;
+    
+    public function __construct($apiKey) {
+        $this->apiKey = $apiKey;
+        $this->baseUrl = "https://api.nicealts.com";
+    }
+    
+    private function makeRequest($endpoint, $method = "GET", $data = null) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . $endpoint);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $this->apiKey,
+            "Content-Type: application/json"
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        if ($method === "POST") {
+            curl_setopt($ch, CURLOPT_POST, true);
+            if ($data) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+        }
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+        
+        if ($error) {
+            throw new Exception("cURL Error: " . $error);
+        }
+        
+        return [
+            'status_code' => $httpCode,
+            'body' => $response
+        ];
+    }
+    
+    public function getStock() {
+        $response = $this->makeRequest("/v1/stock");
+        
+        if ($response['status_code'] === 200) {
+            return json_decode($response['body'], true);
+        } else {
+            $error = json_decode($response['body'], true);
+            throw new Exception($error['detail'] ?? 'Unknown error');
+        }
+    }
+    
+    public function purchaseAccounts($product, $quantity, $precheck = "full", $maxRetries = 3) {
+        $orderData = [
+            "product" => $product,
+            "quantity" => $quantity,
+            "precheck" => $precheck
+        ];
+        
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $response = $this->makeRequest("/v1/order", "POST", $orderData);
+                
+                if ($response['status_code'] === 200) {
+                    return $response['body'];
+                } elseif ($response['status_code'] === 429) {
+                    // Rate limited
+                    $waitTime = pow(2, $attempt);
+                    echo "Rate limited. Waiting {$waitTime} seconds...\n";
+                    sleep($waitTime);
+                    continue;
+                } else {
+                    $error = json_decode($response['body'], true);
+                    throw new Exception($error['detail'] ?? 'Unknown error');
+                }
+            } catch (Exception $e) {
+                if ($attempt === $maxRetries) {
+                    throw $e;
+                }
+                echo "Attempt {$attempt} failed: " . $e->getMessage() . "\n";
+                sleep(pow(2, $attempt)); // Exponential backoff
+            }
+        }
+        
+        throw new Exception("Max retries exceeded");
+    }
+    
+    public function bulkPurchase($orders) {
+        $results = [];
+        
+        foreach ($orders as $order) {
+            $product = $order['product'];
+            $quantity = $order['quantity'];
+            $precheck = $order['precheck'] ?? 'full';
+            
+            echo "Purchasing {$quantity} {$product} accounts...\n";
+            
+            try {
+                $accounts = $this->purchaseAccounts($product, $quantity, $precheck);
+                $results[] = [
+                    'success' => true,
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'accounts' => $accounts
+                ];
+                echo "✅ Successfully purchased {$quantity} {$product} accounts\n";
+            } catch (Exception $e) {
+                $results[] = [
+                    'success' => false,
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'error' => $e->getMessage()
+                ];
+                echo "❌ Failed to purchase {$product}: " . $e->getMessage() . "\n";
+            }
+            
+            // Small delay between orders
+            sleep(1);
+        }
+        
+        return $results;
+    }
+}
+
+// Usage
+$api = new NiceAltsAPI("YOUR_API_KEY_HERE");
+
+// Define bulk orders
+$orders = [
+    ["product" => "Unban (AccessToken)", "quantity" => 2, "precheck" => "full"],
+    ["product" => "Ban (AccessToken)", "quantity" => 3, "precheck" => "none"],
+    ["product" => "Unban HQ (Cookie)", "quantity" => 1, "precheck" => "full"]
+];
+
+$results = $api->bulkPurchase($orders);
+
+// Save results
+file_put_contents('purchase_results.json', json_encode($results, JSON_PRETTY_PRINT));
+?>
+```
+
+## Web application examples
+
+### Simple web interface
+
+```php
+<?php
+// index.php
+session_start();
+
+class NiceAltsWeb {
+    private $apiKey;
+    private $baseUrl;
+    
+    public function __construct($apiKey) {
+        $this->apiKey = $apiKey;
+        $this->baseUrl = "https://api.nicealts.com";
+    }
+    
+    public function getStock() {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . "/v1/stock");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $this->apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            return json_decode($response, true);
+        }
+        
+        return null;
+    }
+    
+    public function purchaseAccounts($product, $quantity, $precheck = "full") {
+        $orderData = [
+            "product" => $product,
+            "quantity" => $quantity,
+            "precheck" => $precheck
+        ];
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . "/v1/order");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer " . $this->apiKey,
+            "Content-Type: application/json"
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($orderData));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            return $response;
+        } else {
+            $error = json_decode($response, true);
+            throw new Exception($error['detail'] ?? 'Unknown error');
+        }
+    }
+}
+
+$apiKey = "YOUR_API_KEY_HERE";
+$niceAlts = new NiceAltsWeb($apiKey);
+
+// Handle AJAX requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    try {
+        if ($_POST['action'] === 'check_stock') {
+            $stock = $niceAlts->getStock();
+            echo json_encode(['success' => true, 'data' => $stock]);
+        } elseif ($_POST['action'] === 'purchase') {
+            $product = $_POST['product'];
+            $quantity = (int)$_POST['quantity'];
+            $precheck = $_POST['precheck'];
+            
+            $accounts = $niceAlts->purchaseAccounts($product, $quantity, $precheck);
+            echo json_encode(['success' => true, 'accounts' => $accounts]);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NiceAlts API Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input, select { padding: 8px; margin: 5px; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>NiceAlts API Demo</h1>
+    
+    <div class="section">
+        <h2>Check Stock</h2>
+        <button onclick="checkStock()">Check Stock</button>
+        <div id="stockResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Purchase Accounts</h2>
+        <form id="purchaseForm">
+            <label>Product:</label>
+            <select id="product" required>
+                <option value="Unban (AccessToken)">Unban (AccessToken)</option>
+                <option value="Ban (AccessToken)">Ban (AccessToken)</option>
+                <option value="Unban HQ (Cookie)">Unban HQ (Cookie)</option>
+            </select><br>
+            
+            <label>Quantity:</label>
+            <input type="number" id="quantity" min="1" max="10" value="1" required><br>
+            
+            <label>Precheck:</label>
+            <select id="precheck">
+                <option value="full">Full</option>
+                <option value="none">None</option>
+            </select><br>
+            
+            <button type="submit">Purchase</button>
+        </form>
+        <div id="purchaseResult" class="result"></div>
+    </div>
+
+    <script>
+        function checkStock() {
+            const resultDiv = document.getElementById('stockResult');
+            resultDiv.innerHTML = 'Loading...';
+            
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'action=check_stock'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let html = '<h3>Current Stock:</h3><ul>';
+                    Object.entries(data.data).forEach(([product, info]) => {
+                        html += `<li>${product}: ${info.stock} available for ${info.price} credits</li>`;
+                    });
+                    html += '</ul>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">Error: ${data.error}</span>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<span class="error">Network error: ${error.message}</span>`;
+            });
+        }
+        
+        document.getElementById('purchaseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('purchaseResult');
+            const product = document.getElementById('product').value;
+            const quantity = document.getElementById('quantity').value;
+            const precheck = document.getElementById('precheck').value;
+            
+            resultDiv.innerHTML = 'Processing...';
+            
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=purchase&product=${encodeURIComponent(product)}&quantity=${quantity}&precheck=${precheck}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3 class="success">Purchase Successful!</h3>
+                        <pre>${data.accounts}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">Purchase failed: ${data.error}</span>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<span class="error">Network error: ${error.message}</span>`;
+            });
+        });
+    </script>
+</body>
+</html>
+```
+
+## Environment variables
+
+For production use, store your API key in environment variables:
+
+```php
+<?php
+// Load from .env file or environment
+$apiKey = $_ENV['NICEALTS_API_KEY'] ?? getenv('NICEALTS_API_KEY');
+
+if (!$apiKey) {
+    throw new Exception('NICEALTS_API_KEY environment variable not set');
+}
+
+// Use the API key
+$niceAlts = new NiceAltsAPI($apiKey);
+?>
+```
+
+## Error handling best practices
+
+```php
+<?php
+class NiceAltsClient {
+    private $apiKey;
+    private $baseUrl;
+    
+    public function __construct($apiKey) {
+        $this->apiKey = $apiKey;
+        $this->baseUrl = "https://api.nicealts.com";
+    }
+    
+    public function makeRequest($endpoint, $method = "GET", $data = null, $maxRetries = 3) {
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $this->baseUrl . $endpoint);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    "Authorization: Bearer " . $this->apiKey,
+                    "Content-Type: application/json"
+                ]);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                
+                if ($method === "POST") {
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    if ($data) {
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                    }
+                }
+                
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $error = curl_error($ch);
+                curl_close($ch);
+                
+                if ($error) {
+                    throw new Exception("cURL Error: " . $error);
+                }
+                
+                if ($httpCode === 200) {
+                    return [
+                        'success' => true,
+                        'data' => $response
+                    ];
+                } elseif ($httpCode === 429) {
+                    // Rate limited
+                    $waitTime = pow(2, $attempt);
+                    echo "Rate limited. Waiting {$waitTime} seconds...\n";
+                    sleep($waitTime);
+                    continue;
+                } else {
+                    $errorData = json_decode($response, true);
+                    return [
+                        'success' => false,
+                        'error' => $errorData['detail'] ?? 'Unknown error'
+                    ];
+                }
+                
+            } catch (Exception $e) {
+                if ($attempt === $maxRetries) {
+                    return [
+                        'success' => false,
+                        'error' => $e->getMessage()
+                    ];
+                }
+                echo "Attempt {$attempt} failed: " . $e->getMessage() . "\n";
+                sleep(pow(2, $attempt)); // Exponential backoff
+            }
+        }
+        
+        return [
+            'success' => false,
+            'error' => 'Max retries exceeded'
+        ];
+    }
+    
+    public function getStock() {
+        $result = $this->makeRequest('/v1/stock');
+        return $result['success'] ? json_decode($result['data'], true) : null;
+    }
+    
+    public function purchaseAccounts($product, $quantity, $precheck = "full") {
+        $result = $this->makeRequest('/v1/order', 'POST', [
+            'product' => $product,
+            'quantity' => $quantity,
+            'precheck' => $precheck
+        ]);
+        return $result['success'] ? $result['data'] : null;
+    }
+}
+
+// Usage
+$client = new NiceAltsClient("YOUR_API_KEY_HERE");
+
+// Check stock
+$stock = $client->getStock();
+if ($stock) {
+    print_r($stock);
+}
+
+// Purchase accounts
+$accounts = $client->purchaseAccounts("Unban (AccessToken)", 1, "full");
+if ($accounts) {
+    echo $accounts;
+}
+?>
+```
+
+<Tip>
+**Pro tip:** Use PHP's built-in cURL functions for simple scripts, or consider Guzzle HTTP client for more advanced features like middleware and better error handling.
+</Tip>

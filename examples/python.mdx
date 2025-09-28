@@ -1,0 +1,469 @@
+---
+title: "Python Examples"
+description: "Python code examples for the NiceAlts API"
+---
+
+## Overview
+
+Python is perfect for automation scripts, web applications, and data processing. These examples show you how to integrate the NiceAlts API into your Python projects.
+
+## Basic setup
+
+First, install the required dependencies:
+
+```bash
+pip install requests
+```
+
+For async operations, you can also use:
+
+```bash
+pip install aiohttp
+```
+
+## Basic examples
+
+### Check stock
+
+```python
+import requests
+
+def check_stock():
+    API_KEY = "YOUR_API_KEY_HERE"
+    BASE_URL = "https://api.nicealts.com"
+    
+    headers = {
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    
+    try:
+        response = requests.get(f"{BASE_URL}/v1/stock", headers=headers)
+        response.raise_for_status()
+        
+        stock = response.json()
+        print("Current stock:")
+        for product, info in stock.items():
+            print(f"{product}: {info['stock']} available for {info['price']} credits")
+        
+        return stock
+    except requests.exceptions.RequestException as e:
+        print(f"Error checking stock: {e}")
+        return None
+
+# Usage
+stock = check_stock()
+```
+
+### Purchase accounts
+
+```python
+import requests
+
+def purchase_accounts(product, quantity, precheck="full"):
+    API_KEY = "YOUR_API_KEY_HERE"
+    BASE_URL = "https://api.nicealts.com"
+    
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    order_data = {
+        "product": product,
+        "quantity": quantity,
+        "precheck": precheck
+    }
+    
+    try:
+        response = requests.post(f"{BASE_URL}/v1/order", 
+                               headers=headers, 
+                               json=order_data)
+        
+        if response.status_code == 200:
+            accounts = response.text
+            print("Purchase successful!")
+            print("Accounts received:")
+            print(accounts)
+            return accounts
+        else:
+            error = response.json()
+            print(f"Purchase failed: {error['detail']}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Error making purchase: {e}")
+        return None
+
+# Usage
+accounts = purchase_accounts("Unban (AccessToken)", 1, "full")
+```
+
+## Advanced examples
+
+### Stock monitoring with alerts
+
+```python
+import requests
+import time
+import json
+from datetime import datetime
+
+class StockMonitor:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://api.nicealts.com"
+        self.headers = {"Authorization": f"Bearer {api_key}"}
+        self.alert_threshold = 10
+    
+    def check_stock(self):
+        try:
+            response = requests.get(f"{self.base_url}/v1/stock", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error checking stock: {e}")
+            return None
+    
+    def monitor_stock(self, interval=60):
+        print(f"Starting stock monitoring (checking every {interval} seconds)...")
+        
+        while True:
+            stock = self.check_stock()
+            if stock:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"\n[{timestamp}] Stock update:")
+                
+                for product, info in stock.items():
+                    print(f"  {product}: {info['stock']} available")
+                    
+                    if info['stock'] < self.alert_threshold:
+                        print(f"  ⚠️  LOW STOCK ALERT: {product} has only {info['stock']} left!")
+            
+            time.sleep(interval)
+
+# Usage
+monitor = StockMonitor("YOUR_API_KEY_HERE")
+monitor.monitor_stock(interval=30)  # Check every 30 seconds
+```
+
+### Bulk purchasing with error handling
+
+```python
+import requests
+import time
+import json
+
+class NiceAltsAPI:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://api.nicealts.com"
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+    
+    def check_stock(self):
+        try:
+            response = requests.get(f"{self.base_url}/v1/stock", headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error checking stock: {e}")
+            return None
+    
+    def purchase_accounts(self, product, quantity, precheck="full"):
+        order_data = {
+            "product": product,
+            "quantity": quantity,
+            "precheck": precheck
+        }
+        
+        try:
+            response = requests.post(f"{self.base_url}/v1/order", 
+                                   headers=self.headers, 
+                                   json=order_data)
+            
+            if response.status_code == 200:
+                return response.text
+            elif response.status_code == 429:
+                print("Rate limited. Waiting 60 seconds...")
+                time.sleep(60)
+                return self.purchase_accounts(product, quantity, precheck)  # Retry
+            else:
+                error = response.json()
+                raise Exception(f"Purchase failed: {error['detail']}")
+                
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Network error: {e}")
+    
+    def bulk_purchase(self, orders):
+        results = []
+        
+        for order in orders:
+            product = order['product']
+            quantity = order['quantity']
+            precheck = order.get('precheck', 'full')
+            
+            print(f"Purchasing {quantity} {product} accounts...")
+            
+            try:
+                accounts = self.purchase_accounts(product, quantity, precheck)
+                results.append({
+                    'success': True,
+                    'product': product,
+                    'quantity': quantity,
+                    'accounts': accounts
+                })
+                print(f"✅ Successfully purchased {quantity} {product} accounts")
+                
+            except Exception as e:
+                results.append({
+                    'success': False,
+                    'product': product,
+                    'quantity': quantity,
+                    'error': str(e)
+                })
+                print(f"❌ Failed to purchase {product}: {e}")
+            
+            # Small delay between orders to avoid rate limits
+            time.sleep(1)
+        
+        return results
+
+# Usage
+api = NiceAltsAPI("YOUR_API_KEY_HERE")
+
+# Define bulk orders
+orders = [
+    {"product": "Unban (AccessToken)", "quantity": 2, "precheck": "full"},
+    {"product": "Ban (AccessToken)", "quantity": 3, "precheck": "none"},
+    {"product": "Unban HQ (Cookie)", "quantity": 1, "precheck": "full"}
+]
+
+results = api.bulk_purchase(orders)
+
+# Save results
+with open('purchase_results.json', 'w') as f:
+    json.dump(results, f, indent=2)
+```
+
+## Async examples with aiohttp
+
+### Async stock checking
+
+```python
+import aiohttp
+import asyncio
+
+async def check_stock_async():
+    API_KEY = "YOUR_API_KEY_HERE"
+    BASE_URL = "https://api.nicealts.com"
+    
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(f"{BASE_URL}/v1/stock", headers=headers) as response:
+                if response.status == 200:
+                    stock = await response.json()
+                    print("Stock data:", stock)
+                    return stock
+                else:
+                    error = await response.json()
+                    print(f"Error: {error['detail']}")
+                    return None
+        except aiohttp.ClientError as e:
+            print(f"Network error: {e}")
+            return None
+
+# Usage
+asyncio.run(check_stock_async())
+```
+
+### Async bulk purchasing
+
+```python
+import aiohttp
+import asyncio
+import time
+
+async def purchase_accounts_async(session, product, quantity, precheck="full"):
+    API_KEY = "YOUR_API_KEY_HERE"
+    BASE_URL = "https://api.nicealts.com"
+    
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    order_data = {
+        "product": product,
+        "quantity": quantity,
+        "precheck": precheck
+    }
+    
+    try:
+        async with session.post(f"{BASE_URL}/v1/order", 
+                               headers=headers, 
+                               json=order_data) as response:
+            if response.status == 200:
+                accounts = await response.text()
+                return {"success": True, "accounts": accounts}
+            elif response.status == 429:
+                print("Rate limited, waiting...")
+                await asyncio.sleep(60)
+                return await purchase_accounts_async(session, product, quantity, precheck)
+            else:
+                error = await response.json()
+                return {"success": False, "error": error["detail"]}
+    except aiohttp.ClientError as e:
+        return {"success": False, "error": str(e)}
+
+async def bulk_purchase_async(orders):
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        
+        for order in orders:
+            task = purchase_accounts_async(
+                session, 
+                order["product"], 
+                order["quantity"], 
+                order.get("precheck", "full")
+            )
+            tasks.append(task)
+        
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return results
+
+# Usage
+orders = [
+    {"product": "Unban (AccessToken)", "quantity": 1, "precheck": "full"},
+    {"product": "Ban (AccessToken)", "quantity": 2, "precheck": "none"}
+]
+
+results = asyncio.run(bulk_purchase_async(orders))
+for i, result in enumerate(results):
+    if isinstance(result, dict) and result.get("success"):
+        print(f"Order {i+1}: Success")
+    else:
+        print(f"Order {i+1}: Failed - {result}")
+```
+
+## Environment variables
+
+For production use, store your API key in environment variables:
+
+```python
+import os
+import requests
+
+# Load API key from environment
+API_KEY = os.getenv("NICEALTS_API_KEY")
+if not API_KEY:
+    raise ValueError("NICEALTS_API_KEY environment variable not set")
+
+def make_request(endpoint, method="GET", data=None):
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    url = f"https://api.nicealts.com{endpoint}"
+    
+    if method == "GET":
+        response = requests.get(url, headers=headers)
+    elif method == "POST":
+        headers["Content-Type"] = "application/json"
+        response = requests.post(url, headers=headers, json=data)
+    
+    return response
+
+# Usage
+stock = make_request("/v1/stock").json()
+accounts = make_request("/v1/order", "POST", {
+    "product": "Unban (AccessToken)",
+    "quantity": 1,
+    "precheck": "full"
+}).text
+```
+
+## Error handling best practices
+
+```python
+import requests
+import time
+from typing import Optional, Dict, Any
+
+class NiceAltsClient:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://api.nicealts.com"
+        self.headers = {"Authorization": f"Bearer {api_key}"}
+    
+    def _make_request(self, endpoint: str, method: str = "GET", 
+                     data: Optional[Dict[str, Any]] = None, 
+                     max_retries: int = 3) -> Optional[requests.Response]:
+        """Make a request with retry logic and proper error handling."""
+        
+        for attempt in range(max_retries):
+            try:
+                if method == "GET":
+                    response = requests.get(f"{self.base_url}{endpoint}", 
+                                          headers=self.headers)
+                elif method == "POST":
+                    headers = {**self.headers, "Content-Type": "application/json"}
+                    response = requests.post(f"{self.base_url}{endpoint}", 
+                                           headers=headers, json=data)
+                
+                if response.status_code == 200:
+                    return response
+                elif response.status_code == 429:
+                    # Rate limited - exponential backoff
+                    wait_time = (2 ** attempt) + 1
+                    print(f"Rate limited. Waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    error = response.json()
+                    print(f"API error: {error.get('detail', 'Unknown error')}")
+                    return None
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"Network error (attempt {attempt + 1}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    return None
+        
+        return None
+    
+    def get_stock(self) -> Optional[Dict[str, Any]]:
+        """Get current stock information."""
+        response = self._make_request("/v1/stock")
+        return response.json() if response else None
+    
+    def purchase_accounts(self, product: str, quantity: int, 
+                         precheck: str = "full") -> Optional[str]:
+        """Purchase accounts with proper error handling."""
+        data = {
+            "product": product,
+            "quantity": quantity,
+            "precheck": precheck
+        }
+        
+        response = self._make_request("/v1/order", "POST", data)
+        return response.text if response else None
+
+# Usage
+client = NiceAltsClient("YOUR_API_KEY_HERE")
+
+# Check stock
+stock = client.get_stock()
+if stock:
+    print("Stock:", stock)
+
+# Purchase accounts
+accounts = client.purchase_accounts("Unban (AccessToken)", 1, "full")
+if accounts:
+    print("Accounts:", accounts)
+```
+
+<Tip>
+**Pro tip:** Use the `requests` library for simple scripts and `aiohttp` for high-performance applications that need to handle many concurrent requests.
+</Tip>

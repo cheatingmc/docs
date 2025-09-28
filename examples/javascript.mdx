@@ -1,0 +1,652 @@
+---
+title: "JavaScript Examples"
+description: "JavaScript and Node.js code examples for the NiceAlts API"
+---
+
+## Overview
+
+JavaScript is perfect for web applications, Node.js backends, and browser-based tools. These examples show you how to integrate the NiceAlts API into your JavaScript projects.
+
+## Basic setup
+
+For Node.js projects, install the required dependencies:
+
+```bash
+npm install axios
+# or
+npm install node-fetch
+```
+
+For browser applications, you can use the built-in `fetch` API.
+
+## Basic examples
+
+### Check stock with fetch
+
+```javascript
+async function checkStock() {
+    const API_KEY = "YOUR_API_KEY_HERE";
+    const BASE_URL = "https://api.nicealts.com";
+    
+    try {
+        const response = await fetch(`${BASE_URL}/v1/stock`, {
+            headers: {
+                "Authorization": `Bearer ${API_KEY}`
+            }
+        });
+        
+        if (response.ok) {
+            const stock = await response.json();
+            console.log("Current stock:");
+            Object.entries(stock).forEach(([product, info]) => {
+                console.log(`${product}: ${info.stock} available for ${info.price} credits`);
+            });
+            return stock;
+        } else {
+            const error = await response.json();
+            console.error("Error checking stock:", error.detail);
+            return null;
+        }
+    } catch (error) {
+        console.error("Network error:", error);
+        return null;
+    }
+}
+
+// Usage
+checkStock();
+```
+
+### Purchase accounts with fetch
+
+```javascript
+async function purchaseAccounts(product, quantity, precheck = "full") {
+    const API_KEY = "YOUR_API_KEY_HERE";
+    const BASE_URL = "https://api.nicealts.com";
+    
+    try {
+        const response = await fetch(`${BASE_URL}/v1/order`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                product,
+                quantity,
+                precheck
+            })
+        });
+        
+        if (response.ok) {
+            const accounts = await response.text();
+            console.log("Purchase successful!");
+            console.log("Accounts received:");
+            console.log(accounts);
+            return accounts;
+        } else {
+            const error = await response.json();
+            console.error("Purchase failed:", error.detail);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error making purchase:", error);
+        return null;
+    }
+}
+
+// Usage
+purchaseAccounts("Unban (AccessToken)", 1, "full");
+```
+
+## Node.js examples with axios
+
+### Basic API client
+
+```javascript
+const axios = require('axios');
+
+class NiceAltsAPI {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseURL = "https://api.nicealts.com";
+        this.client = axios.create({
+            baseURL: this.baseURL,
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            }
+        });
+    }
+    
+    async checkStock() {
+        try {
+            const response = await this.client.get('/v1/stock');
+            return response.data;
+        } catch (error) {
+            if (error.response) {
+                console.error("API error:", error.response.data.detail);
+            } else {
+                console.error("Network error:", error.message);
+            }
+            return null;
+        }
+    }
+    
+    async purchaseAccounts(product, quantity, precheck = "full") {
+        try {
+            const response = await this.client.post('/v1/order', {
+                product,
+                quantity,
+                precheck
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response) {
+                console.error("Purchase failed:", error.response.data.detail);
+            } else {
+                console.error("Network error:", error.message);
+            }
+            return null;
+        }
+    }
+}
+
+// Usage
+const api = new NiceAltsAPI("YOUR_API_KEY_HERE");
+
+// Check stock
+api.checkStock().then(stock => {
+    if (stock) {
+        console.log("Stock:", stock);
+    }
+});
+
+// Purchase accounts
+api.purchaseAccounts("Unban (AccessToken)", 1, "full").then(accounts => {
+    if (accounts) {
+        console.log("Accounts:", accounts);
+    }
+});
+```
+
+### Stock monitoring with alerts
+
+```javascript
+const axios = require('axios');
+
+class StockMonitor {
+    constructor(apiKey, alertThreshold = 10) {
+        this.apiKey = apiKey;
+        this.baseURL = "https://api.nicealts.com";
+        this.alertThreshold = alertThreshold;
+        this.client = axios.create({
+            baseURL: this.baseURL,
+            headers: {
+                "Authorization": `Bearer ${apiKey}`
+            }
+        });
+    }
+    
+    async checkStock() {
+        try {
+            const response = await this.client.get('/v1/stock');
+            return response.data;
+        } catch (error) {
+            console.error("Error checking stock:", error.message);
+            return null;
+        }
+    }
+    
+    async monitorStock(intervalMs = 60000) {
+        console.log(`Starting stock monitoring (checking every ${intervalMs/1000} seconds)...`);
+        
+        const checkAndAlert = async () => {
+            const stock = await this.checkStock();
+            if (stock) {
+                const timestamp = new Date().toLocaleString();
+                console.log(`\n[${timestamp}] Stock update:`);
+                
+                Object.entries(stock).forEach(([product, info]) => {
+                    console.log(`  ${product}: ${info.stock} available`);
+                    
+                    if (info.stock < this.alertThreshold) {
+                        console.log(`  ⚠️  LOW STOCK ALERT: ${product} has only ${info.stock} left!`);
+                    }
+                });
+            }
+            
+            setTimeout(checkAndAlert, intervalMs);
+        };
+        
+        checkAndAlert();
+    }
+}
+
+// Usage
+const monitor = new StockMonitor("YOUR_API_KEY_HERE");
+monitor.monitorStock(30000); // Check every 30 seconds
+```
+
+## Advanced examples
+
+### Bulk purchasing with rate limiting
+
+```javascript
+const axios = require('axios');
+
+class BulkPurchaser {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseURL = "https://api.nicealts.com";
+        this.client = axios.create({
+            baseURL: this.baseURL,
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            }
+        });
+    }
+    
+    async purchaseWithRetry(product, quantity, precheck = "full", maxRetries = 3) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await this.client.post('/v1/order', {
+                    product,
+                    quantity,
+                    precheck
+                });
+                
+                return {
+                    success: true,
+                    accounts: response.data
+                };
+                
+            } catch (error) {
+                if (error.response?.status === 429) {
+                    // Rate limited
+                    const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
+                    console.log(`Rate limited. Waiting ${waitTime/1000} seconds...`);
+                    await this.sleep(waitTime);
+                    continue;
+                } else {
+                    return {
+                        success: false,
+                        error: error.response?.data?.detail || error.message
+                    };
+                }
+            }
+        }
+        
+        return {
+            success: false,
+            error: "Max retries exceeded"
+        };
+    }
+    
+    async bulkPurchase(orders) {
+        const results = [];
+        
+        for (const order of orders) {
+            console.log(`Purchasing ${order.quantity} ${order.product} accounts...`);
+            
+            const result = await this.purchaseWithRetry(
+                order.product,
+                order.quantity,
+                order.precheck || "full"
+            );
+            
+            results.push({
+                ...order,
+                ...result
+            });
+            
+            if (result.success) {
+                console.log(`✅ Successfully purchased ${order.quantity} ${order.product} accounts`);
+            } else {
+                console.log(`❌ Failed to purchase ${order.product}: ${result.error}`);
+            }
+            
+            // Small delay between orders
+            await this.sleep(1000);
+        }
+        
+        return results;
+    }
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Usage
+const purchaser = new BulkPurchaser("YOUR_API_KEY_HERE");
+
+const orders = [
+    { product: "Unban (AccessToken)", quantity: 2, precheck: "full" },
+    { product: "Ban (AccessToken)", quantity: 3, precheck: "none" },
+    { product: "Unban HQ (Cookie)", quantity: 1, precheck: "full" }
+];
+
+purchaser.bulkPurchase(orders).then(results => {
+    console.log("Bulk purchase results:", results);
+});
+```
+
+### Express.js API wrapper
+
+```javascript
+const express = require('express');
+const axios = require('axios');
+
+class NiceAltsWrapper {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseURL = "https://api.nicealts.com";
+        this.client = axios.create({
+            baseURL: this.baseURL,
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            }
+        });
+    }
+    
+    async getStock() {
+        try {
+            const response = await this.client.get('/v1/stock');
+            return { success: true, data: response.data };
+        } catch (error) {
+            return { 
+                success: false, 
+                error: error.response?.data?.detail || error.message 
+            };
+        }
+    }
+    
+    async purchaseAccounts(product, quantity, precheck = "full") {
+        try {
+            const response = await this.client.post('/v1/order', {
+                product,
+                quantity,
+                precheck
+            });
+            return { success: true, data: response.data };
+        } catch (error) {
+            return { 
+                success: false, 
+                error: error.response?.data?.detail || error.message 
+            };
+        }
+    }
+}
+
+// Express.js server
+const app = express();
+app.use(express.json());
+
+const niceAlts = new NiceAltsWrapper("YOUR_API_KEY_HERE");
+
+// Get stock endpoint
+app.get('/api/stock', async (req, res) => {
+    const result = await niceAlts.getStock();
+    
+    if (result.success) {
+        res.json(result.data);
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+// Purchase accounts endpoint
+app.post('/api/purchase', async (req, res) => {
+    const { product, quantity, precheck } = req.body;
+    
+    if (!product || !quantity) {
+        return res.status(400).json({ error: "Product and quantity are required" });
+    }
+    
+    const result = await niceAlts.purchaseAccounts(product, quantity, precheck);
+    
+    if (result.success) {
+        res.json({ success: true, accounts: result.data });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+```
+
+## Browser examples
+
+### HTML form for purchasing
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NiceAlts API Demo</title>
+</head>
+<body>
+    <h1>NiceAlts API Demo</h1>
+    
+    <div>
+        <h2>Check Stock</h2>
+        <button onclick="checkStock()">Check Stock</button>
+        <div id="stockResult"></div>
+    </div>
+    
+    <div>
+        <h2>Purchase Accounts</h2>
+        <form id="purchaseForm">
+            <label>
+                Product:
+                <select id="product">
+                    <option value="Unban (AccessToken)">Unban (AccessToken)</option>
+                    <option value="Ban (AccessToken)">Ban (AccessToken)</option>
+                    <option value="Unban HQ (Cookie)">Unban HQ (Cookie)</option>
+                </select>
+            </label>
+            <br><br>
+            <label>
+                Quantity:
+                <input type="number" id="quantity" min="1" max="10" value="1">
+            </label>
+            <br><br>
+            <label>
+                Precheck:
+                <select id="precheck">
+                    <option value="full">Full</option>
+                    <option value="none">None</option>
+                </select>
+            </label>
+            <br><br>
+            <button type="submit">Purchase</button>
+        </form>
+        <div id="purchaseResult"></div>
+    </div>
+
+    <script>
+        const API_KEY = "YOUR_API_KEY_HERE";
+        const BASE_URL = "https://api.nicealts.com";
+        
+        async function checkStock() {
+            const resultDiv = document.getElementById('stockResult');
+            resultDiv.innerHTML = "Loading...";
+            
+            try {
+                const response = await fetch(`${BASE_URL}/v1/stock`, {
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const stock = await response.json();
+                    let html = "<h3>Current Stock:</h3><ul>";
+                    Object.entries(stock).forEach(([product, info]) => {
+                        html += `<li>${product}: ${info.stock} available for ${info.price} credits</li>`;
+                    });
+                    html += "</ul>";
+                    resultDiv.innerHTML = html;
+                } else {
+                    const error = await response.json();
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${error.detail}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Network error: ${error.message}</p>`;
+            }
+        }
+        
+        document.getElementById('purchaseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('purchaseResult');
+            const product = document.getElementById('product').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const precheck = document.getElementById('precheck').value;
+            
+            resultDiv.innerHTML = "Processing...";
+            
+            try {
+                const response = await fetch(`${BASE_URL}/v1/order`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product,
+                        quantity,
+                        precheck
+                    })
+                });
+                
+                if (response.ok) {
+                    const accounts = await response.text();
+                    resultDiv.innerHTML = `
+                        <h3>Purchase Successful!</h3>
+                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px;">${accounts}</pre>
+                    `;
+                } else {
+                    const error = await response.json();
+                    resultDiv.innerHTML = `<p style="color: red;">Purchase failed: ${error.detail}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Network error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
+```
+
+## Environment variables
+
+For production use, store your API key in environment variables:
+
+```javascript
+// .env file
+// NICEALTS_API_KEY=your_api_key_here
+
+require('dotenv').config();
+
+const API_KEY = process.env.NICEALTS_API_KEY;
+if (!API_KEY) {
+    throw new Error('NICEALTS_API_KEY environment variable not set');
+}
+
+// Use the API key in your application
+const niceAlts = new NiceAltsAPI(API_KEY);
+```
+
+## Error handling best practices
+
+```javascript
+class NiceAltsClient {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseURL = "https://api.nicealts.com";
+    }
+    
+    async makeRequest(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        const config = {
+            headers: {
+                "Authorization": `Bearer ${this.apiKey}`,
+                "Content-Type": "application/json",
+                ...options.headers
+            },
+            ...options
+        };
+        
+        try {
+            const response = await fetch(url, config);
+            
+            if (response.ok) {
+                return {
+                    success: true,
+                    data: await response.text()
+                };
+            } else if (response.status === 429) {
+                // Rate limited
+                const retryAfter = response.headers.get('Retry-After') || 60;
+                console.log(`Rate limited. Waiting ${retryAfter} seconds...`);
+                await this.sleep(retryAfter * 1000);
+                return this.makeRequest(endpoint, options); // Retry
+            } else {
+                const error = await response.json();
+                return {
+                    success: false,
+                    error: error.detail || 'Unknown error'
+                };
+            }
+        } catch (error) {
+            return {
+                success: false,
+                error: `Network error: ${error.message}`
+            };
+        }
+    }
+    
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    async getStock() {
+        const result = await this.makeRequest('/v1/stock');
+        return result.success ? JSON.parse(result.data) : null;
+    }
+    
+    async purchaseAccounts(product, quantity, precheck = "full") {
+        const result = await this.makeRequest('/v1/order', {
+            method: 'POST',
+            body: JSON.stringify({ product, quantity, precheck })
+        });
+        return result.success ? result.data : null;
+    }
+}
+
+// Usage
+const client = new NiceAltsClient("YOUR_API_KEY_HERE");
+
+// Check stock
+const stock = await client.getStock();
+if (stock) {
+    console.log("Stock:", stock);
+}
+
+// Purchase accounts
+const accounts = await client.purchaseAccounts("Unban (AccessToken)", 1, "full");
+if (accounts) {
+    console.log("Accounts:", accounts);
+}
+```
+
+<Tip>
+**Pro tip:** Use `fetch` for modern browsers and Node.js 18+, or `axios` for older Node.js versions and more advanced features like request/response interceptors.
+</Tip>
