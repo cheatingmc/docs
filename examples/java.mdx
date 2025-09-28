@@ -1,0 +1,705 @@
+---
+title: "Java Examples"
+description: "Java code examples for the NiceAlts API"
+---
+
+## Overview
+
+Java is perfect for enterprise applications, Android apps, and server-side services. These examples show you how to integrate the NiceAlts API into your Java projects.
+
+## Basic setup
+
+Add the required dependencies to your `pom.xml` (Maven) or `build.gradle` (Gradle):
+
+### Maven
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>4.12.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.10.1</version>
+    </dependency>
+</dependencies>
+```
+
+### Gradle
+
+```gradle
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+```
+
+## Basic examples
+
+### Check stock
+
+```java
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.util.Map;
+
+public class NiceAltsAPI {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    
+    public NiceAltsAPI() {
+        this.client = new OkHttpClient();
+        this.gson = new Gson();
+    }
+    
+    public Map<String, Object> checkStock() throws IOException {
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/v1/stock")
+                .addHeader("Authorization", "Bearer " + API_KEY)
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code " + response);
+            }
+            
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, Map.class);
+        }
+    }
+    
+    public static void main(String[] args) {
+        NiceAltsAPI api = new NiceAltsAPI();
+        
+        try {
+            Map<String, Object> stock = api.checkStock();
+            System.out.println("Current stock:");
+            
+            for (Map.Entry<String, Object> entry : stock.entrySet()) {
+                JsonObject productInfo = gson.toJsonTree(entry.getValue()).getAsJsonObject();
+                int price = productInfo.get("price").getAsInt();
+                int stockCount = productInfo.get("stock").getAsInt();
+                System.out.println(entry.getKey() + ": " + stockCount + " available for " + price + " credits");
+            }
+        } catch (IOException e) {
+            System.err.println("Error checking stock: " + e.getMessage());
+        }
+    }
+}
+```
+
+### Purchase accounts
+
+```java
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+
+public class AccountPurchaser {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    
+    public AccountPurchaser() {
+        this.client = new OkHttpClient();
+        this.gson = new Gson();
+    }
+    
+    public String purchaseAccounts(String product, int quantity, String precheck) throws IOException {
+        JsonObject orderData = new JsonObject();
+        orderData.addProperty("product", product);
+        orderData.addProperty("quantity", quantity);
+        orderData.addProperty("precheck", precheck);
+        
+        RequestBody body = RequestBody.create(
+                orderData.toString(),
+                MediaType.parse("application/json")
+        );
+        
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/v1/order")
+                .post(body)
+                .addHeader("Authorization", "Bearer " + API_KEY)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body().string();
+                throw new IOException("Purchase failed: " + errorBody);
+            }
+            
+            return response.body().string();
+        }
+    }
+    
+    public static void main(String[] args) {
+        AccountPurchaser purchaser = new AccountPurchaser();
+        
+        try {
+            String accounts = purchaser.purchaseAccounts("Unban (AccessToken)", 1, "full");
+            System.out.println("Purchase successful!");
+            System.out.println("Accounts received:");
+            System.out.println(accounts);
+        } catch (IOException e) {
+            System.err.println("Error purchasing accounts: " + e.getMessage());
+        }
+    }
+}
+```
+
+## Advanced examples
+
+### Complete API client with error handling
+
+```java
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+public class NiceAltsClient {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    
+    public NiceAltsClient() {
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build();
+        this.gson = new Gson();
+    }
+    
+    public Map<String, Object> getStock() throws IOException {
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/v1/stock")
+                .addHeader("Authorization", "Bearer " + API_KEY)
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                handleErrorResponse(response);
+            }
+            
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, Map.class);
+        }
+    }
+    
+    public String purchaseAccounts(String product, int quantity, String precheck) throws IOException {
+        JsonObject orderData = new JsonObject();
+        orderData.addProperty("product", product);
+        orderData.addProperty("quantity", quantity);
+        orderData.addProperty("precheck", precheck);
+        
+        RequestBody body = RequestBody.create(
+                orderData.toString(),
+                MediaType.parse("application/json")
+        );
+        
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/v1/order")
+                .post(body)
+                .addHeader("Authorization", "Bearer " + API_KEY)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                handleErrorResponse(response);
+            }
+            
+            return response.body().string();
+        }
+    }
+    
+    private void handleErrorResponse(Response response) throws IOException {
+        String errorBody = response.body().string();
+        JsonObject errorJson = gson.fromJson(errorBody, JsonObject.class);
+        String errorMessage = errorJson.has("detail") ? 
+                errorJson.get("detail").getAsString() : 
+                "Unknown error";
+        
+        throw new IOException("API Error (" + response.code() + "): " + errorMessage);
+    }
+    
+    public static void main(String[] args) {
+        NiceAltsClient client = new NiceAltsClient();
+        
+        try {
+            // Check stock
+            Map<String, Object> stock = client.getStock();
+            System.out.println("Stock information:");
+            for (Map.Entry<String, Object> entry : stock.entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue());
+            }
+            
+            // Purchase accounts
+            String accounts = client.purchaseAccounts("Unban (AccessToken)", 1, "full");
+            System.out.println("\nPurchase successful!");
+            System.out.println("Accounts: " + accounts);
+            
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+    }
+}
+```
+
+### Stock monitoring with alerts
+
+```java
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class StockMonitor {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    private final int alertThreshold;
+    
+    public StockMonitor(int alertThreshold) {
+        this.client = new OkHttpClient();
+        this.gson = new Gson();
+        this.alertThreshold = alertThreshold;
+    }
+    
+    public Map<String, Object> checkStock() throws IOException {
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/v1/stock")
+                .addHeader("Authorization", "Bearer " + API_KEY)
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to check stock: " + response.code());
+            }
+            
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, Map.class);
+        }
+    }
+    
+    public void startMonitoring(long intervalSeconds) {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    Map<String, Object> stock = checkStock();
+                    System.out.println("\n[" + java.time.LocalDateTime.now() + "] Stock update:");
+                    
+                    for (Map.Entry<String, Object> entry : stock.entrySet()) {
+                        JsonObject productInfo = gson.toJsonTree(entry.getValue()).getAsJsonObject();
+                        int stockCount = productInfo.get("stock").getAsInt();
+                        int price = productInfo.get("price").getAsInt();
+                        
+                        System.out.println("  " + entry.getKey() + ": " + stockCount + " available for " + price + " credits");
+                        
+                        if (stockCount < alertThreshold) {
+                            System.out.println("  ⚠️  LOW STOCK ALERT: " + entry.getKey() + " has only " + stockCount + " left!");
+                        }
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error monitoring stock: " + e.getMessage());
+                }
+            }
+        }, 0, intervalSeconds * 1000);
+    }
+    
+    public static void main(String[] args) {
+        StockMonitor monitor = new StockMonitor(10); // Alert when stock < 10
+        System.out.println("Starting stock monitoring (checking every 30 seconds)...");
+        monitor.startMonitoring(30);
+    }
+}
+```
+
+### Bulk purchasing with retry logic
+
+```java
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class BulkPurchaser {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    
+    public BulkPurchaser() {
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
+        this.gson = new Gson();
+    }
+    
+    public static class Order {
+        public String product;
+        public int quantity;
+        public String precheck;
+        
+        public Order(String product, int quantity, String precheck) {
+            this.product = product;
+            this.quantity = quantity;
+            this.precheck = precheck;
+        }
+    }
+    
+    public static class PurchaseResult {
+        public boolean success;
+        public String product;
+        public int quantity;
+        public String accounts;
+        public String error;
+        
+        public PurchaseResult(boolean success, String product, int quantity, String accounts, String error) {
+            this.success = success;
+            this.product = product;
+            this.quantity = quantity;
+            this.accounts = accounts;
+            this.error = error;
+        }
+    }
+    
+    public PurchaseResult purchaseWithRetry(Order order, int maxRetries) {
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                String accounts = purchaseAccounts(order.product, order.quantity, order.precheck);
+                return new PurchaseResult(true, order.product, order.quantity, accounts, null);
+                
+            } catch (IOException e) {
+                if (attempt == maxRetries) {
+                    return new PurchaseResult(false, order.product, order.quantity, null, e.getMessage());
+                }
+                
+                System.out.println("Attempt " + attempt + " failed: " + e.getMessage());
+                try {
+                    Thread.sleep((long) Math.pow(2, attempt) * 1000); // Exponential backoff
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return new PurchaseResult(false, order.product, order.quantity, null, "Interrupted");
+                }
+            }
+        }
+        
+        return new PurchaseResult(false, order.product, order.quantity, null, "Max retries exceeded");
+    }
+    
+    public String purchaseAccounts(String product, int quantity, String precheck) throws IOException {
+        JsonObject orderData = new JsonObject();
+        orderData.addProperty("product", product);
+        orderData.addProperty("quantity", quantity);
+        orderData.addProperty("precheck", precheck);
+        
+        RequestBody body = RequestBody.create(
+                orderData.toString(),
+                MediaType.parse("application/json")
+        );
+        
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/v1/order")
+                .post(body)
+                .addHeader("Authorization", "Bearer " + API_KEY)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body().string();
+                throw new IOException("Purchase failed: " + errorBody);
+            }
+            
+            return response.body().string();
+        }
+    }
+    
+    public List<PurchaseResult> bulkPurchase(List<Order> orders) {
+        List<PurchaseResult> results = new ArrayList<>();
+        
+        for (Order order : orders) {
+            System.out.println("Purchasing " + order.quantity + " " + order.product + " accounts...");
+            
+            PurchaseResult result = purchaseWithRetry(order, 3);
+            results.add(result);
+            
+            if (result.success) {
+                System.out.println("✅ Successfully purchased " + result.quantity + " " + result.product + " accounts");
+            } else {
+                System.out.println("❌ Failed to purchase " + result.product + ": " + result.error);
+            }
+            
+            // Small delay between orders
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        
+        return results;
+    }
+    
+    public static void main(String[] args) {
+        BulkPurchaser purchaser = new BulkPurchaser();
+        
+        List<Order> orders = new ArrayList<>();
+        orders.add(new Order("Unban (AccessToken)", 2, "full"));
+        orders.add(new Order("Ban (AccessToken)", 3, "none"));
+        orders.add(new Order("Unban HQ (Cookie)", 1, "full"));
+        
+        List<PurchaseResult> results = purchaser.bulkPurchase(orders);
+        
+        System.out.println("\nBulk purchase results:");
+        for (PurchaseResult result : results) {
+            if (result.success) {
+                System.out.println("✅ " + result.product + ": " + result.quantity + " accounts");
+            } else {
+                System.out.println("❌ " + result.product + ": " + result.error);
+            }
+        }
+    }
+}
+```
+
+## Spring Boot example
+
+### REST controller
+
+```java
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/nicealts")
+public class NiceAltsController {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    
+    public NiceAltsController() {
+        this.client = new OkHttpClient();
+        this.gson = new Gson();
+    }
+    
+    @GetMapping("/stock")
+    public ResponseEntity<?> getStock() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/v1/stock")
+                    .addHeader("Authorization", "Bearer " + API_KEY)
+                    .build();
+            
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Failed to fetch stock: " + response.code());
+                }
+                
+                String responseBody = response.body().string();
+                Map<String, Object> stock = gson.fromJson(responseBody, Map.class);
+                return ResponseEntity.ok(stock);
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
+    }
+    
+    @PostMapping("/purchase")
+    public ResponseEntity<?> purchaseAccounts(@RequestBody PurchaseRequest request) {
+        try {
+            JsonObject orderData = new JsonObject();
+            orderData.addProperty("product", request.getProduct());
+            orderData.addProperty("quantity", request.getQuantity());
+            orderData.addProperty("precheck", request.getPrecheck());
+            
+            RequestBody body = RequestBody.create(
+                    orderData.toString(),
+                    MediaType.parse("application/json")
+            );
+            
+            Request apiRequest = new Request.Builder()
+                    .url(BASE_URL + "/v1/order")
+                    .post(body)
+                    .addHeader("Authorization", "Bearer " + API_KEY)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+            
+            try (Response response = client.newCall(apiRequest).execute()) {
+                if (!response.isSuccessful()) {
+                    String errorBody = response.body().string();
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Purchase failed: " + errorBody);
+                }
+                
+                String accounts = response.body().string();
+                return ResponseEntity.ok(new PurchaseResponse(true, accounts, null));
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new PurchaseResponse(false, null, e.getMessage()));
+        }
+    }
+    
+    public static class PurchaseRequest {
+        private String product;
+        private int quantity;
+        private String precheck = "full";
+        
+        // Getters and setters
+        public String getProduct() { return product; }
+        public void setProduct(String product) { this.product = product; }
+        public int getQuantity() { return quantity; }
+        public void setQuantity(int quantity) { this.quantity = quantity; }
+        public String getPrecheck() { return precheck; }
+        public void setPrecheck(String precheck) { this.precheck = precheck; }
+    }
+    
+    public static class PurchaseResponse {
+        private boolean success;
+        private String accounts;
+        private String error;
+        
+        public PurchaseResponse(boolean success, String accounts, String error) {
+            this.success = success;
+            this.accounts = accounts;
+            this.error = error;
+        }
+        
+        // Getters and setters
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+        public String getAccounts() { return accounts; }
+        public void setAccounts(String accounts) { this.accounts = accounts; }
+        public String getError() { return error; }
+        public void setError(String error) { this.error = error; }
+    }
+}
+```
+
+## Environment variables
+
+For production use, store your API key in environment variables:
+
+```java
+public class Config {
+    public static final String API_KEY = System.getenv("NICEALTS_API_KEY");
+    
+    static {
+        if (API_KEY == null || API_KEY.isEmpty()) {
+            throw new IllegalStateException("NICEALTS_API_KEY environment variable not set");
+        }
+    }
+}
+```
+
+## Error handling best practices
+
+```java
+import okhttp3.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+public class RobustNiceAltsClient {
+    private static final String API_KEY = "YOUR_API_KEY_HERE";
+    private static final String BASE_URL = "https://api.nicealts.com";
+    private final OkHttpClient client;
+    private final Gson gson;
+    
+    public RobustNiceAltsClient() {
+        this.client = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .build();
+        this.gson = new Gson();
+    }
+    
+    public Map<String, Object> getStock() throws IOException {
+        return makeRequest("/v1/stock", "GET", null);
+    }
+    
+    public String purchaseAccounts(String product, int quantity, String precheck) throws IOException {
+        JsonObject orderData = new JsonObject();
+        orderData.addProperty("product", product);
+        orderData.addProperty("quantity", quantity);
+        orderData.addProperty("precheck", precheck);
+        
+        return makeRequest("/v1/order", "POST", orderData);
+    }
+    
+    private String makeRequest(String endpoint, String method, JsonObject data) throws IOException {
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(BASE_URL + endpoint)
+                .addHeader("Authorization", "Bearer " + API_KEY);
+        
+        if (data != null) {
+            RequestBody body = RequestBody.create(
+                    data.toString(),
+                    MediaType.parse("application/json")
+            );
+            requestBuilder.post(body);
+            requestBuilder.addHeader("Content-Type", "application/json");
+        }
+        
+        Request request = requestBuilder.build();
+        
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body().string();
+                JsonObject errorJson = gson.fromJson(errorBody, JsonObject.class);
+                String errorMessage = errorJson.has("detail") ? 
+                        errorJson.get("detail").getAsString() : 
+                        "Unknown error";
+                
+                throw new IOException("API Error (" + response.code() + "): " + errorMessage);
+            }
+            
+            return response.body().string();
+        }
+    }
+}
+```
+
+<Tip>
+**Pro tip:** Use OkHttp for HTTP requests and Gson for JSON parsing. For Spring Boot applications, consider using RestTemplate or WebClient for better integration with the framework.
+</Tip>

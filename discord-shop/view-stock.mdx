@@ -1,0 +1,343 @@
+---
+title: "How to View Stock"
+description: "Learn how to check available Minecraft accounts and current stock levels"
+---
+
+## Overview
+
+Checking stock levels is essential before making purchases. This guide shows you how to view available Minecraft accounts, their prices, and current stock levels through our Discord bot.
+
+## Quick stock check
+
+### Basic command
+
+Use this simple command to see all available accounts:
+
+```
+/stock
+```
+
+This will display:
+- All available account types
+- Current prices in credits
+- Stock levels for each type
+- Quality information
+
+### Example output
+
+```
+📊 Current Stock:
+
+🛡️ Unban (AccessToken)
+   Price: 50 credits each
+   Stock: 150 available
+   Quality: High
+
+🛡️ Ban (AccessToken)
+   Price: 30 credits each
+   Stock: 75 available
+   Quality: Standard
+
+👑 Unban HQ (Cookie)
+   Price: 100 credits each
+   Stock: 25 available
+   Quality: Premium
+```
+
+## Detailed stock information
+
+### Account type breakdown
+
+<Columns cols={3}>
+  <Card title="Unban (AccessToken)" icon="shield-check">
+    **Price:** 50 credits each
+    **Format:** email:password:access_token
+    **Quality:** High
+    **Best for:** Most applications
+  </Card>
+  <Card title="Ban (AccessToken)" icon="shield">
+    **Price:** 30 credits each
+    **Format:** email:password:access_token
+    **Quality:** Standard
+    **Best for:** Budget users
+  </Card>
+  <Card title="Unban HQ (Cookie)" icon="crown">
+    **Price:** 100 credits each
+    **Format:** email:password:cookie_data
+    **Quality:** Premium
+    **Best for:** High-value apps
+  </Card>
+</Columns>
+
+### Understanding stock levels
+
+<AccordionGroup>
+<Accordion title="High stock (100+ available)">
+  - Accounts readily available
+  - Fast delivery guaranteed
+  - No purchase limits
+  - Best for bulk orders
+</Accordion>
+
+<Accordion title="Medium stock (20-99 available)">
+  - Good availability
+  - Normal delivery times
+  - Reasonable purchase limits
+  - Suitable for most orders
+</Accordion>
+
+<Accordion title="Low stock (1-19 available)">
+  - Limited availability
+  - May have purchase limits
+  - Consider alternative types
+  - Check frequently for restocks
+</Accordion>
+
+<Accordion title="Out of stock (0 available)">
+  - No accounts available
+  - Check back later
+  - Consider other account types
+  - Join restock notifications
+</Accordion>
+</AccordionGroup>
+
+## Advanced stock checking
+
+### Check specific account type
+
+To get detailed information about a specific account type:
+
+```
+/stock unban
+/stock ban
+/stock cookie
+```
+
+This provides:
+- Detailed pricing information
+- Current stock count
+- Quality specifications
+- Delivery estimates
+
+### Stock alerts
+
+Set up notifications for low stock or restocks:
+
+```
+/stock-alerts on
+/stock-alerts unban
+/stock-alerts off
+```
+
+<Info>
+**Stock alerts:** Get notified when stock levels change or when your preferred account types are restocked.
+</Info>
+
+## Understanding account types
+
+### AccessToken accounts
+
+**Unban (AccessToken)**
+- **Price:** 50 credits each
+- **Quality:** High-quality unbanned accounts
+- **Format:** `email:password:access_token`
+- **Use case:** Most applications and tools
+- **Prechecking:** Available (recommended)
+
+**Ban (AccessToken)**
+- **Price:** 30 credits each
+- **Quality:** Standard banned accounts
+- **Format:** `email:password:access_token`
+- **Use case:** Budget-conscious users
+- **Prechecking:** Available
+
+### Cookie accounts
+
+**Unban HQ (Cookie)**
+- **Price:** 100 credits each
+- **Quality:** Premium unbanned accounts with session data
+- **Format:** `email:password:cookie_data`
+- **Use case:** High-value applications requiring session data
+- **Prechecking:** Available (recommended)
+
+## Stock monitoring tips
+
+### When to check stock
+
+<Columns cols={2}>
+  <Card title="Before large purchases" icon="shopping-cart">
+    Always check stock before placing bulk orders to avoid partial fulfillment
+  </Card>
+  <Card title="During peak hours" icon="clock">
+    Stock levels change frequently during busy periods
+  </Card>
+  <Card title="Before important projects" icon="exclamation-triangle">
+    Ensure availability for time-sensitive applications
+  </Card>
+  <Card title="Regular monitoring" icon="chart-line">
+    Set up alerts for your preferred account types
+  </Card>
+</Columns>
+
+### Stock patterns
+
+<AccordionGroup>
+<Accordion title="Peak hours">
+  **When:** Evenings and weekends (UTC)
+  **Stock impact:** Higher demand, faster depletion
+  **Recommendation:** Check stock more frequently
+</Accordion>
+
+<Accordion title="Restock times">
+  **Frequency:** Multiple times per day
+  **Pattern:** Usually during off-peak hours
+  **Recommendation:** Set up restock alerts
+</Accordion>
+
+<Accordion title="Popular types">
+  **Most popular:** Unban (AccessToken)
+  **Fastest selling:** Premium Cookie accounts
+  **Most stable:** Ban (AccessToken)
+</Accordion>
+</AccordionGroup>
+
+## Using stock information
+
+### Planning purchases
+
+<Steps>
+<Step title="Check current stock">
+  Use `/stock` to see what's available right now
+</Step>
+
+<Step title="Calculate costs">
+  Multiply quantity by price to estimate total cost
+  Example: 5 Unban accounts = 5 × 50 = 250 credits
+</Step>
+
+<Step title="Verify your balance">
+  Use `/balance` to ensure you have enough credits
+</Step>
+
+<Step title="Consider alternatives">
+  If your preferred type is low stock, check other options
+</Step>
+</Steps>
+
+### Bulk purchase planning
+
+For large orders, consider:
+
+- **Stock availability** - Ensure enough accounts for your order
+- **Purchase limits** - Some types may have quantity limits
+- **Delivery time** - Larger orders may take longer to process
+- **Alternative types** - Have backup options ready
+
+## Stock-related commands
+
+### Complete command list
+
+```
+/stock                    # View all available stock
+/stock [type]            # View specific account type
+/stock-alerts on         # Enable stock notifications
+/stock-alerts off        # Disable stock notifications
+/stock-alerts [type]     # Set alerts for specific type
+/balance                 # Check your credit balance
+/history                 # View purchase history
+```
+
+### Command examples
+
+```
+/stock unban             # Check Unban AccessToken stock
+/stock ban               # Check Ban AccessToken stock
+/stock cookie            # Check Cookie account stock
+/stock-alerts unban      # Get notified when Unban stock changes
+```
+
+## Troubleshooting stock issues
+
+### Common problems
+
+<AccordionGroup>
+<Accordion title="Command not working">
+  **Problem:** `/stock` command not responding
+  **Solutions:**
+  - Make sure you're in the correct Discord server
+  - Check if the bot is online
+  - Try again in a few minutes
+  - Contact support if persistent
+</Accordion>
+
+<Accordion title="Outdated information">
+  **Problem:** Stock information seems old
+  **Solutions:**
+  - Stock updates in real-time
+  - Refresh the command
+  - Check if there's a system update
+  - Wait a moment and try again
+</Accordion>
+
+<Accordion title="Missing account types">
+  **Problem:** Expected account type not showing
+  **Solutions:**
+  - Check if it's temporarily out of stock
+  - Verify the account type name
+  - Contact support for availability
+  - Consider alternative types
+</Accordion>
+</AccordionGroup>
+
+## Best practices
+
+### Regular monitoring
+
+- **Check before purchases** - Always verify stock before buying
+- **Set up alerts** - Get notified of stock changes
+- **Monitor trends** - Learn stock patterns over time
+- **Plan ahead** - Stock up during high availability periods
+
+### Smart purchasing
+
+- **Buy during high stock** - Better availability and faster delivery
+- **Have alternatives ready** - Don't rely on just one account type
+- **Consider bulk discounts** - Larger orders may have better rates
+- **Time your purchases** - Avoid peak demand periods if possible
+
+## Integration with API
+
+### For developers
+
+If you're using our API, you can also check stock programmatically:
+
+<Card
+  title="API Stock Endpoint"
+  icon="code"
+  href="/api-reference/endpoints/stock"
+>
+  Learn how to check stock levels using our API
+</Card>
+
+### Real-time monitoring
+
+For applications that need real-time stock monitoring:
+
+- Use the API for automated stock checking
+- Set up monitoring scripts
+- Implement stock-based purchasing logic
+- Create alerts for low stock conditions
+
+## Ready to check stock?
+
+<Card
+  title="View current stock"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Join our Discord and use `/stock` to see what accounts are available right now
+</Card>
+
+<Tip>
+**Pro tip:** Set up stock alerts for your preferred account types to never miss restocks or low stock warnings!
+</Tip>

@@ -16,30 +16,29 @@
           {
             "group": "Getting Started",
             "pages": [
-              "index",
-              "manual-purchasing",
-              "quickstart"
+              "index"
             ]
           },
           {
-            "group": "API Reference",
+            "group": "API",
             "pages": [
               "api-reference/overview",
               "api-reference/authentication",
-              "api-reference/endpoints/stock",
-              "api-reference/endpoints/order",
-              "api-reference/error-handling",
-              "api-reference/rate-limits"
-            ]
-          },
-          {
-            "group": "Examples",
-            "pages": [
               "examples/curl",
               "examples/python",
               "examples/javascript",
               "examples/php",
-              "examples/go"
+              "examples/go",
+              "examples/java"
+            ]
+          },
+          {
+            "group": "Discord Shop",
+            "pages": [
+              "discord-shop/buy-credits",
+              "discord-shop/view-stock",
+              "discord-shop/buy-accounts",
+              "discord-shop/product-info"
             ]
           }
         ]

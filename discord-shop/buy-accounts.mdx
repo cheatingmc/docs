@@ -1,0 +1,370 @@
+---
+title: "How to Buy Accounts"
+description: "Complete guide to purchasing Minecraft accounts through Discord"
+---
+
+## Overview
+
+This guide covers everything you need to know about purchasing Minecraft accounts through our Discord bot. Learn the commands, understand the process, and make successful purchases.
+
+## Prerequisites
+
+Before you can buy accounts, make sure you have:
+
+- ✅ Joined our Discord server
+- ✅ Credits in your account balance
+- ✅ Checked available stock
+
+<Card
+  title="Join Discord"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Join our Discord server to start purchasing accounts
+</Card>
+
+## Basic purchase process
+
+### Step 1: Check your balance
+
+First, verify you have enough credits:
+
+```
+/balance
+```
+
+This shows your current credit balance and recent transactions.
+
+### Step 2: Check available stock
+
+See what accounts are available:
+
+```
+/stock
+```
+
+This displays all available account types, prices, and stock levels.
+
+### Step 3: Make your purchase
+
+Use the purchase command:
+
+```
+/buy [account-type] [quantity]
+```
+
+## Purchase commands
+
+### Basic syntax
+
+```
+/buy [type] [quantity] [options]
+```
+
+### Account type options
+
+- `unban` - Unban (AccessToken) accounts
+- `ban` - Ban (AccessToken) accounts  
+- `cookie` - Unban HQ (Cookie) accounts
+
+### Quantity limits
+
+- **Minimum:** 1 account
+- **Maximum:** 10 accounts per order
+- **Bulk orders:** Contact support for larger quantities
+
+### Purchase examples
+
+```
+/buy unban 1          # Buy 1 unbanned AccessToken account
+/buy ban 3            # Buy 3 banned AccessToken accounts
+/buy cookie 2         # Buy 2 premium Cookie accounts
+/buy unban 5          # Buy 5 unbanned AccessToken accounts
+```
+
+## Advanced purchase options
+
+### Prechecking options
+
+Add prechecking to ensure account quality:
+
+```
+/buy unban 1 precheck:full    # Full validation (recommended)
+/buy unban 1 precheck:none    # No prechecking (faster)
+```
+
+<Info>
+**Prechecking:** Validates accounts before delivery to ensure they work properly. Adds a small delay but guarantees quality.
+</Info>
+
+### Complete command examples
+
+```
+/buy unban 2 precheck:full    # 2 unbanned accounts with full validation
+/buy ban 1 precheck:none      # 1 banned account without prechecking
+/buy cookie 1 precheck:full   # 1 premium cookie account with validation
+```
+
+## Account types explained
+
+### Unban (AccessToken)
+- **Command:** `/buy unban [quantity]`
+- **Price:** 50 credits each
+- **Quality:** High
+- **Format:** `email:password:access_token`
+- **Best for:** Most applications and tools
+- **Prechecking:** Available and recommended
+
+### Ban (AccessToken)
+- **Command:** `/buy ban [quantity]`
+- **Price:** 30 credits each
+- **Quality:** Standard
+- **Format:** `email:password:access_token`
+- **Best for:** Budget-conscious users
+- **Prechecking:** Available
+
+### Unban HQ (Cookie)
+- **Command:** `/buy cookie [quantity]`
+- **Price:** 100 credits each
+- **Quality:** Premium
+- **Format:** `email:password:cookie_data`
+- **Best for:** High-value applications
+- **Prechecking:** Available and recommended
+
+## Purchase process details
+
+### What happens when you buy
+
+<Steps>
+<Step title="Command processing">
+  The bot processes your purchase request and validates:
+  - Your account balance
+  - Stock availability
+  - Command syntax
+  - Purchase limits
+</Step>
+
+<Step title="Payment deduction">
+  Credits are deducted from your account balance for the purchase amount
+</Step>
+
+<Step title="Account generation">
+  Accounts are selected from our stock and prepared for delivery
+</Step>
+
+<Step title="Quality validation">
+  If prechecking is enabled, accounts are tested to ensure they work
+</Step>
+
+<Step title="Delivery">
+  Account details are sent to you in a private message
+</Step>
+</Steps>
+
+### Delivery format
+
+You'll receive accounts in this format:
+
+```
+email1@example.com:password123:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+email2@example.com:password456:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+Each line contains one account with:
+- **Email address**
+- **Password**
+- **Access token or cookie data**
+
+## Understanding costs
+
+### Price calculation
+
+Total cost = Quantity × Price per account
+
+**Examples:**
+- 1 Unban account = 1 × 50 = 50 credits
+- 3 Ban accounts = 3 × 30 = 90 credits
+- 2 Cookie accounts = 2 × 100 = 200 credits
+
+### Prechecking costs
+
+- **Full prechecking:** No additional cost
+- **No prechecking:** No additional cost
+- **Prechecking is included** in the base price
+
+## Purchase limits and restrictions
+
+### Quantity limits
+
+- **Per order:** Maximum 10 accounts
+- **Per day:** No daily limit for regular users
+- **Bulk orders:** Contact support for 50+ accounts
+
+### Account restrictions
+
+- **One order at a time:** Complete current order before placing another
+- **Stock availability:** Can't buy more than available stock
+- **Balance requirements:** Must have sufficient credits
+
+## Troubleshooting purchases
+
+### Common issues
+
+<AccordionGroup>
+<Accordion title="Insufficient balance">
+  **Problem:** Not enough credits for the purchase
+  **Error message:** "Insufficient balance. Required: X credits, Available: Y credits"
+  **Solution:** 
+  - Use `/balance` to check your current balance
+  - Use `/buy-credits` to purchase more credits
+  - Reduce the quantity in your order
+</Accordion>
+
+<Accordion title="Out of stock">
+  **Problem:** No accounts available of the requested type
+  **Error message:** "Insufficient stock. Requested: X, Available: Y"
+  **Solution:**
+  - Use `/stock` to check current availability
+  - Try a different account type
+  - Reduce the quantity
+  - Wait for restock
+</Accordion>
+
+<Accordion title="Invalid command">
+  **Problem:** Command not recognized or malformed
+  **Error message:** "Invalid command format"
+  **Solution:**
+  - Check command syntax: `/buy [type] [quantity]`
+  - Use correct account type names (unban, ban, cookie)
+  - Ensure quantity is a number between 1-10
+</Accordion>
+
+<Accordion title="Purchase failed">
+  **Problem:** Purchase process failed unexpectedly
+  **Error message:** "Purchase failed. Please try again."
+  **Solution:**
+  - Wait a few minutes and try again
+  - Check if the bot is online
+  - Contact support if the issue persists
+</Accordion>
+</AccordionGroup>
+
+### Getting help
+
+If you're having issues with purchases:
+
+<Card
+  title="Contact Support"
+  icon="headset"
+  href="https://discord.gg/nicealts"
+>
+  Join our Discord and use the support channels for help with purchases
+</Card>
+
+## Best practices
+
+### Before purchasing
+
+- **Check stock levels** - Use `/stock` to ensure availability
+- **Verify your balance** - Use `/balance` to confirm sufficient credits
+- **Plan your order** - Decide on account type and quantity
+- **Consider prechecking** - Enable for important purchases
+
+### During purchase
+
+- **Use correct syntax** - Follow the command format exactly
+- **Be patient** - Some purchases may take a few moments
+- **Don't spam commands** - Wait for responses before trying again
+- **Keep it simple** - Start with small orders to test
+
+### After purchase
+
+- **Save account details** - Store them securely for future use
+- **Test accounts quickly** - Verify they work as expected
+- **Check delivery format** - Ensure you understand the format
+- **Contact support if needed** - We provide replacements for non-working accounts
+
+## Account usage
+
+### Using AccessToken accounts
+
+```
+Format: email:password:access_token
+
+Example usage:
+- Email: user@example.com
+- Password: password123
+- Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Using Cookie accounts
+
+```
+Format: email:password:cookie_data
+
+Example usage:
+- Email: user@example.com
+- Password: password123
+- Cookie Data: session_id=abc123; auth_token=xyz789
+```
+
+<Warning>
+**Security:** Keep your account details secure! Never share them publicly or store them in unsecured locations.
+</Warning>
+
+## Purchase history
+
+### View your orders
+
+Check your recent purchases:
+
+```
+/history
+```
+
+This shows:
+- Recent orders
+- Account types purchased
+- Purchase dates and times
+- Order status
+- Total costs
+
+### Order tracking
+
+- **Order ID:** Each purchase gets a unique ID
+- **Status tracking:** See if orders are processing or completed
+- **Support reference:** Use order IDs when contacting support
+
+## Advanced features
+
+### Bulk purchasing
+
+For large quantities (50+ accounts):
+
+1. Contact support in Discord
+2. Specify your requirements
+3. Get custom pricing
+4. Arrange bulk delivery
+
+### Custom orders
+
+For special requirements:
+
+- **Specific account types** - Contact support for custom options
+- **Large quantities** - Bulk pricing available
+- **Special delivery** - Custom delivery methods
+- **Enterprise solutions** - Business accounts available
+
+## Ready to buy accounts?
+
+<Card
+  title="Start purchasing accounts"
+  icon="discord"
+  href="https://discord.gg/nicealts"
+>
+  Join our Discord and use `/buy` commands to start purchasing Minecraft accounts
+</Card>
+
+<Tip>
+**New user?** Start with a small purchase (1-2 accounts) to test the service, then scale up as needed!
+</Tip>
