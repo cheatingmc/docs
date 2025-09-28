@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "dark",
+  "theme": "mint",
   "name": "NiceAlts API",
   "colors": {
     "primary": "#16A34A",
