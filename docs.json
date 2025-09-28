@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "NiceAlts API",
   "colors": {
-    "primary": "#000000",
-    "light": "#333333",
-    "dark": "#000000"
+    "primary": "#6B7280",
+    "light": "#9CA3AF",
+    "dark": "#4B5563"
   },
   "favicon": "/favicon.svg",
   "navigation": {
