@@ -8,32 +8,39 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": [
-        "index",
-        "quickstart"
-      ]
-    },
-    {
-      "group": "API Reference",
-      "pages": [
-        "api-reference/overview",
-        "api-reference/authentication",
-        "api-reference/endpoints/stock",
-        "api-reference/endpoints/order",
-        "api-reference/error-handling",
-        "api-reference/rate-limits"
-      ]
-    },
-    {
-      "group": "Examples",
-      "pages": [
-        "examples/curl"
-      ]
-    }
-  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/authentication",
+              "api-reference/endpoints/stock",
+              "api-reference/endpoints/order",
+              "api-reference/error-handling",
+              "api-reference/rate-limits"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/curl"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "anchors": [
     {
       "anchor": "Discord",
