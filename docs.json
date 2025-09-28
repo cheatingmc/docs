@@ -30,18 +30,7 @@
     {
       "group": "Examples",
       "pages": [
-        "examples/curl",
-        "examples/python",
-        "examples/javascript",
-        "examples/php",
-        "examples/go"
-      ]
-    },
-    {
-      "group": "Support",
-      "pages": [
-        "support/faq",
-        "support/contact"
+        "examples/curl"
       ]
     }
   ],
