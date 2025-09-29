@@ -53,7 +53,7 @@ Here's how to include your API key in a request:
 
 <CodeGroup>
 ```bash cURL
-curl -H "Authorization: Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1" \
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
      https://api.nicealts.com/v1/stock
 ```
 
@@ -61,7 +61,7 @@ curl -H "Authorization: Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1"
 import requests
 
 headers = {
-    "Authorization": "Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1"
+    "Authorization": "Bearer YOUR_API_KEY_HERE"
 }
 
 response = requests.get("https://api.nicealts.com/v1/stock", headers=headers)
@@ -69,7 +69,7 @@ response = requests.get("https://api.nicealts.com/v1/stock", headers=headers)
 
 ```javascript JavaScript
 const headers = {
-    "Authorization": "Bearer x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1"
+    "Authorization": "Bearer YOUR_API_KEY_HERE"
 };
 
 fetch("https://api.nicealts.com/v1/stock", { headers })
@@ -83,7 +83,7 @@ fetch("https://api.nicealts.com/v1/stock", { headers })
 Your API key will look something like this:
 
 ```
-x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1
+YOUR_API_KEY_HERE
 ```
 
 - **Length:** 40 characters
@@ -107,7 +107,7 @@ Store your API key as an environment variable:
 
 <CodeGroup>
 ```bash .env
-NICEALTS_API_KEY=x5BOtn5K2P7ZT344Df0i2sC532xWdmuZ2QPLdK9TtvUoMXU1
+NICEALTS_API_KEY=YOUR_API_KEY_HERE
 ```
 
 ```python Python
